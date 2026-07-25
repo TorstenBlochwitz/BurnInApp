@@ -1,0 +1,172 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:BurnInApp"
+		mc:Ignorable="d" d:DesignWidth="620" d:DesignHeight="520"
+		x:Class="BurnInApp.BurnInSettingsDialog"
+		Title="Burn-In Settings"
+		Width="620" Height="520"
+		WindowStartupLocation="CenterOwner"
+		CanResize="False">
+
+	<Grid RowDefinitions="*,Auto" Margin="10">
+		<!-- Tab Control -->
+		<TabControl Grid.Row="0" Margin="0,0,0,10">
+			<TabControl.Styles>
+				<Style Selector="TabItem">
+					<Setter Property="FontSize" Value="16"/>
+				</Style>
+			</TabControl.Styles>
+			<!-- General Tab -->
+			<TabItem Header="General">
+				<ScrollViewer>
+					<StackPanel Margin="10" Spacing="5">
+						<!-- Settings File -->
+						<DockPanel>
+							<Label DockPanel.Dock="Left" Content="Settings File:" Width="280" VerticalAlignment="Center"/>
+							<Button DockPanel.Dock="Right" Content="Set..." Width="60" Margin="5,0,0,0" 
+									Click="SetSettingsFile_Click" x:Name="SetSettingsFileButton"/>
+							<TextBox x:Name="SettingsFileTextBox" IsReadOnly="False" VerticalAlignment="Center"/>
+						</DockPanel>
+
+						<!-- Folder for BurnIn Profiles -->
+						<DockPanel>
+							<Label DockPanel.Dock="Left" Content="Folder for BurnIn Profiles:" Width="280" VerticalAlignment="Center"/>
+							<Button DockPanel.Dock="Right" Content="Set..." Width="60" Margin="5,0,0,0" 
+									Click="SetFolderBurnInProfiles_Click"/>
+							<TextBox x:Name="FolderBurnInProfilesTextBox" IsReadOnly="True" VerticalAlignment="Center"/>
+						</DockPanel>
+
+						<!-- Folder for Measurement Files -->
+						<DockPanel>
+							<Label DockPanel.Dock="Left" Content="Folder for Measurement Files:" Width="280" VerticalAlignment="Center"/>
+							<Button DockPanel.Dock="Right" Content="Set..." Width="60" Margin="5,0,0,0" 
+									Click="SetFolderMeasurement_Click"/>
+							<TextBox x:Name="FolderMeasurementTextBox" IsReadOnly="True" VerticalAlignment="Center"/>
+						</DockPanel>
+
+						<!-- Folder for Status Files -->
+						<DockPanel>
+							<Label DockPanel.Dock="Left" Content="Folder for Status Files:" Width="280" VerticalAlignment="Center"/>
+							<Button DockPanel.Dock="Right" Content="Set..." Width="60" Margin="5,0,0,0" 
+									Click="SetFolderStatus_Click"/>
+							<TextBox x:Name="FolderStatusTextBox" IsReadOnly="True" VerticalAlignment="Center"/>
+						</DockPanel>
+
+						<!-- Store Self-test Result -->
+						<DockPanel>
+							<CheckBox x:Name="StoreSelfTestResultCheckBox" 
+									  DockPanel.Dock="Left"
+									  Content="Store Self-test Result after every:" 
+									  Width="280"
+									  VerticalAlignment="Center"
+									  Click="StoreSelfTestResult_Changed"/>
+							<DockPanel DockPanel.Dock="Right" Width="65" Margin="5,0,0,0">
+								<Label Content="min" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,5,0"/>
+							</DockPanel>
+							<TextBox x:Name="StoreSelfTestResultPeriodTextBox" 
+									 VerticalAlignment="Center"
+									 TextAlignment="Right"/>
+						</DockPanel>
+
+						<!-- Number of Measurements for Mean Values -->
+						<DockPanel>
+							<Label DockPanel.Dock="Left" Content="Number of Measurements for Mean Values:" Width="280" VerticalAlignment="Center"/>
+							<Border DockPanel.Dock="Right" Width="65" Margin="5,0,0,0"/>
+							<TextBox x:Name="NumberOfMeasurementsTextBox" 
+									 VerticalAlignment="Center"
+									 TextAlignment="Right"/>
+						</DockPanel>
+
+						<!-- Brightness of Position LEDs -->
+						<StackPanel>
+							<Label Content="Brightness of Position LEDs:" />
+							<Slider x:Name="BrightnessPositionLEDsSlider" 
+									Minimum="0" 
+									Maximum="100" 
+									TickFrequency="5"
+									IsSnapToTickEnabled="True"
+									TickPlacement="BottomRight"/>
+						</StackPanel>
+
+						<!-- Brightness of Status LEDs -->
+						<StackPanel>
+							<Label Content="Brightness of Status LEDs:" />
+							<Slider x:Name="BrightnessStatusLEDsSlider" 
+									Minimum="0" 
+									Maximum="100" 
+									TickFrequency="5"
+									IsSnapToTickEnabled="True"
+									TickPlacement="BottomRight"/>
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+			</TabItem>
+
+			<!-- Communication Tab -->
+			<TabItem Header="Communication" x:Name="CommunicationTab">
+				<StackPanel Margin="10" Spacing="3">
+					<!-- Connect MBC via -->
+					<Label Content="Connect via:"/>
+					<StackPanel x:Name="ConnectMBCPanel" Spacing="2">
+						<RadioButton x:Name="USBRadioButton" 
+									 Content="USB (I2C)" 
+									 GroupName="MBCMode"
+									 Click="MBCMode_Changed"/>
+						<RadioButton x:Name="EthernetRadioButton" 
+									 Content="Ethernet (TCP/IP)" 
+									 GroupName="MBCMode"
+									 Click="MBCMode_Changed"/>
+					</StackPanel>
+
+					<!-- IP Address Table -->
+					<Label x:Name="IPAddressLabel" Content="IP Addresses (for TCP/IP mode):" Margin="0,3,0,0" FontSize="12"/>
+					<DataGrid x:Name="IPAddressDataGrid"
+							  Height="250"
+							  AutoGenerateColumns="False"
+							  CanUserReorderColumns="False"
+							  CanUserResizeColumns="True"
+							  CanUserSortColumns="False"
+							  GridLinesVisibility="All"
+							  HeadersVisibility="All"
+							  BorderBrush="Gray"
+							  BorderThickness="1"
+							  RowHeight="22">
+						<DataGrid.Columns>
+							<DataGridTextColumn Header="Position" Binding="{ReflectionBinding Position}" IsReadOnly="True" Width="100"/>
+							<DataGridTextColumn Header="IP Address" Binding="{ReflectionBinding IPAddress, Mode=TwoWay}" IsReadOnly="False" Width="*"/>
+						</DataGrid.Columns>
+						<DataGrid.Styles>
+							<Style Selector="DataGridColumnHeader">
+								<Setter Property="Background" Value="LightGray"/>
+								<Setter Property="FontWeight" Value="Normal"/>
+								<Setter Property="FontSize" Value="12"/>
+								<Setter Property="Height" Value="22"/>
+								<Setter Property="Padding" Value="5,2"/>
+							</Style>
+							<Style Selector="DataGridCell">
+								<Setter Property="FontSize" Value="12"/>
+								<Setter Property="Padding" Value="5,2"/>
+							</Style>
+						</DataGrid.Styles>
+					</DataGrid>
+
+					<!-- Warning Message -->
+					<TextBlock x:Name="ChangesMessageTextBlock" 
+							   Text="Changes will be applied after the next start of the BurnIn App!" 
+							   Foreground="Orange"
+							   FontSize="12"
+							   TextWrapping="Wrap"
+							   Margin="0,3,0,0"/>
+				</StackPanel>
+			</TabItem>
+		</TabControl>
+
+		<!-- OK and Cancel Buttons -->
+		<StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+			<Button Content="OK" Width="90" Click="OK_Click" IsDefault="True" HorizontalContentAlignment="Center"/>
+			<Button Content="Cancel" Width="90" Click="Cancel_Click" IsCancel="True" HorizontalContentAlignment="Center"/>
+		</StackPanel>
+	</Grid>
+</Window>

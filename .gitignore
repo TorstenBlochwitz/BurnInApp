@@ -1,0 +1,117 @@
+###############################
+#   Visual Studio / VS Code   #
+###############################
+
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+###############################
+#       Build Artefacts       #
+###############################
+
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+[Tt]est[Rr]esult*/
+*.cache
+*.db
+*.mdb
+*.pdb
+
+# Roslyn
+*.ide/
+
+###############################
+#         .NET / C#           #
+###############################
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+*.nuget.props
+*.nuget.targets
+
+# ASP.NET / Kestrel
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Entity Framework
+_migrations/
+
+# Publish output
+publish/
+dist/
+
+###############################
+#        Avalonia UI          #
+###############################
+
+# Avalonia build output
+# (Skia, XAML compiled, platform backends)
+*.axaml.cs
+*.xaml.cs
+*.g.cs
+*.g.i.cs
+
+# Avalonia resources cache
+*.resources
+*.assets.cache
+
+# Avalonia Designer
+AvaloniaDesigner/
+*.designer.cs
+
+# Linux GTK backend temp files
+gtk-linux/
+*.so
+*.dll
+
+###############################
+#        Rider / ReSharper    #
+###############################
+
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+###############################
+#        MSBuild / Tools      #
+###############################
+
+*.tlog
+*.lastcodeanalysissucceeded
+*.lastbuildstate
+*.cachefile
+
+###############################
+#        Logs / Temp          #
+###############################
+
+*.log
+*.tmp
+*.temp
+*.bak
+
+###############################
+#        OS-specific          #
+###############################
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~

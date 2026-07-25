@@ -1,0 +1,64 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BurnInApp"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+        x:Class="BurnInApp.MainWindow"
+        Title="BurnInApp"
+        Width="1024" Height="500"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="True"
+        x:DataType="local:MainWindow">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+        <!-- Top area with Connect button and status field -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,20">
+            <Button Grid.Column="0" 
+                    Content="Connect MBC" 
+                    Margin="0,0,10,0"
+                    MinWidth="100"/>
+            <TextBox Grid.Column="1" 
+                     x:Name="MBCStatus"
+                     IsReadOnly="True"
+                     PlaceholderText="Status..."/>
+        </Grid>
+
+        <!-- Content area -->
+        <DataGrid Grid.Row="1"
+                  x:Name="DataTable"
+                  AutoGenerateColumns="False"
+                  CanUserReorderColumns="False"
+                  CanUserResizeColumns="True"
+                  GridLinesVisibility="All"
+                  IsReadOnly="True"
+                  HeadersVisibility="Column"
+                  BorderBrush="Black"
+                  BorderThickness="1"
+                  Height="302"
+                  VerticalAlignment="Top"
+                  HorizontalAlignment="Stretch"
+                  VerticalScrollBarVisibility="Disabled">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Profile" Width="*" Binding="{ReflectionBinding Column1}"/>
+                <DataGridTextColumn Header="Serial Number" Width="*" Binding="{ReflectionBinding Column2}"/>
+                <DataGridTextColumn Header="Start Time" Width="*" Binding="{ReflectionBinding Column3}"/>
+                <DataGridTextColumn Header="End Time" Width="*" Binding="{ReflectionBinding Column4}"/>
+                <DataGridTextColumn Header="Action" Width="*" Binding="{ReflectionBinding Column5}"/>
+                <DataGridTextColumn Header="Status" Width="*" Binding="{ReflectionBinding Column6}"/>
+                <DataGridTextColumn Header="VDC1" Width="*" Binding="{ReflectionBinding Column7}"/>
+                <DataGridTextColumn Header="VDC2" Width="*" Binding="{ReflectionBinding Column8}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Button area -->
+        <Border Grid.Row="2"
+                Padding="0,20,0,0">
+            <Button Content="Settings..." 
+                    HorizontalAlignment="Right"
+                    HorizontalContentAlignment="Center"
+                    MinWidth="100"
+                    Click="Settings_Click"/>
+        </Border>
+    </Grid>
+</Window>
