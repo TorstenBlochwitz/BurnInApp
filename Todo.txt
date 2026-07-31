@@ -1,0 +1,6 @@
+- Rename MBC_TB to MBC_BurnIn
+- MBC: Update writeCheck
+- ADC: Update safe read
+- Check if MBC error messages are somewhere and update them
+- Add decodeSic450_STATUS_WORD to PMBusDev
+- BurnInDevice: Add and use trimmedMean!

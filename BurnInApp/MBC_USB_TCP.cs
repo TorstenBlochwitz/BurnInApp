@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,14 +37,14 @@ namespace BurnInApp
 
         public double Timeout { get; set; } = 1.0;
         public int NumRepeat { get; set; } = 20;
-        public string Version { get; private set; } = string.Empty;
+        public string Version { get; protected set; } = string.Empty;
         public StatusFile? StatusFile { get; private set; }
         public bool Debug { get; set; } = true;
 
         public bool DUTi2cEnable { get; set; } = true;
 
         // I2C Address mapping
-        public List<I2CAddressMapping> I2CAddresses { get; private set; } = new List<I2CAddressMapping>
+        public List<I2CAddressMapping> I2CAddresses { get; protected set; } = new List<I2CAddressMapping>
         {
             new I2CAddressMapping(0, I2CAddrProp.DO_NOTHING, I2CAddrProp.DO_NOTHING)
         };
@@ -70,7 +72,7 @@ namespace BurnInApp
                 string folder;
                 if (OperatingSystem.IsWindows())
                 {
-                    folder = @"C:\Temp\CommunicationStatus";
+                    folder = @"C:\temp\CommunicationStatus";
                 }
                 else
                 {
@@ -245,7 +247,7 @@ namespace BurnInApp
         }
 
         // I2C Address adaptation
-        private (int addr, bool communicate) AdaptAddr(int i2cAddr, int offset)
+        protected (int addr, bool communicate) AdaptAddr(int i2cAddr, int offset)
         {
             int addr = i2cAddr / 2;
             bool communicate = true;
@@ -559,7 +561,7 @@ namespace BurnInApp
         }
 
         // Switch I2C
-        public void SwitchI2C(int channel)
+        public virtual void SwitchI2C(int channel)
         {
             if (Mode == MBCModeEnum.I2C && DUTi2cEnable)
             {
@@ -568,12 +570,163 @@ namespace BurnInApp
             }
         }
 
+        // Error codes returned by the MBC (converted from MATLAB CBerror() code table)
+        private static readonly Dictionary<string, string> CBErrorCodeTable = new Dictionary<string, string>
+        {
+            { "001", "no answer from Ethernet or USB" },
+            { "002", "interface not supported by this version" },
+            { "010", "buffer overflow: transferred string to long" },
+            { "011", "selected mode is not allowed" },
+            { "012", "invalid input: number of bytes {0 .. 128}d" },
+            { "013", "invalid input: trigger-time {1 .. 999}d" },
+            { "014", "action not available; another interface is opened" },
+            { "015", "power supply ASIC = OFF! Wait for switching on" },
+            { "016", "wrong selection action on selected interface" },
+            { "017", "wrong selection speed of interface" },
+            { "018", "OWI - wrong selection of open port parameter" },
+            { "019", "invalid input: twait {0 .. 65535} d " },
+            { "020", "port command - wrong selection of read or write option (2nd character)" },
+            { "021", "port command - invalid input for pin or port (3rd character)" },
+            { "022", "port command - invalid input: port selection {A ... D" },
+            { "023", "port command - invalid input: port state {00 .. FF}h" },
+            { "024", "port command - invalid input: pin selection {0 .. 7}d" },
+            { "025", "port command - invalid input: pin state {0/1/2]d" },
+            { "030", "I²C - Timeout! Master (CB) was not able to drive bus line" },
+            { "031", "I²C - start condition not sent" },
+            { "032", "I²C - read: no address-ack from slave --> try other I²C device address" },
+            { "033", "I²C - read: data not received: No ack from master" },
+            { "034", "I²C - read: last byte not correct. Wrong ack from master" },
+            { "035", "I²C - read: communication error during data byte transmission" },
+            { "036", "I²C - SDA or SCL shorted to GND - no high level on I²C bus --> check KS5V " },
+            { "037", "I²C - write: no ack from slave after transmitting byte" },
+            { "038", "I²C - write: no address-ack from slave --> try other I²C device address" },
+            { "039", "I²C - Length of string from PC doesn't fit to specified lenght. (Check e.g. 'ByteCount' parameter in I2C spreadsheet)" },
+            { "040", "LIN - header incorrect" },
+            { "041", "OWI/Zacwire - Timeout! ASIC does not answer" },
+            { "042", "LIN - CRC incorrect:  received <=> calculated" },
+            { "043", "ZACwire - read: data channel not high" },
+            { "044", "LIN - wrong selection of action (2nd character)" },
+            { "045", "LIN - wrong selection of action (3rd character)" },
+            { "046", "LIN - Interface needs to be open before it can be used (--> use \"LO\" command)" },
+            { "050", "SPI - header incorrect" },
+            { "051", "SPI - Timeout! Master (CB) was not able to drive busline" },
+            { "052", "SPI - Timeout during data trasnmission (either read or write)" },
+            { "061", "MCB - no seperator (:)" },
+            { "062", "MCB - no answer from MCB (serial ACK/NACK)" },
+            { "063", "MCB - no high signal on PinD2 (MCB V2.0) or PinD3 (MCB V2.1) before answer of MCB" },
+            { "064", "MCB - interface not supported by this firmware version" },
+            { "065", "MCB - \"short ACK\" mode of MCB is activated and thus only I2Cor ZACwire commands are allowed after MCB command" },
+            { "066", "MCB - No ACK from MCB in \"short ACK\" mode of MCB (no high signal on readback channel between MCB and CB)" },
+            { "067", "MCB - No ACK from MCB in \"short ACK\" mode of MCB (no low signal on readback channel between MCB and CB)" },
+            { "068", "MCB - firmware version V1.03 and V2.00a/V2.01 connected --> adjustment of timing " },
+            { "069", "MCB - firmware version V1.03 and V2.00a/V2.01 connected - timing adjustment wasn't successful" },
+            { "080", "ZACwire - invalid input: speed of interface [10...13]d or wrong length of input string" },
+            { "081", "ZACwire . wrong action on interface (select either \"read\", \"write\" or \"speed\" interface)" },
+            { "082", "ZACwire - wrong selection for trigger or non trigger (\"T\" or \"_\" for 3rd character) write command" },
+            { "083", "ZACwire - wrong number of parameters for write command --> check \"ByteCount\" and \"BytesToBeWritten\" in \"ZACwire\"" },
+            { "084", "ZACwire - timeout: no high signal found on the ZACwire interface --> check for shorted pin" },
+            { "085", "ZACwire - timeout: IC didn't send 1st high-low transistion to send start-bit" },
+            { "086", "ZACwire - timeout: low-high edge of start-bit didn't received --> check communication speed or shorted pin" },
+            { "087", "ZACwire - timeout: high-low edge at end of start-bit failed" },
+            { "088", "ZACwire - timeout: high-low edge at beginning of databit failed" },
+            { "089", "ZACwire - timeout: low-high edge at end of databit failed" },
+            { "090", "ZACwire - timeout: low-high edge at end of parity bit failed" },
+            { "091", "ZACwire - wrong number of parameters for read command --> check \"ReadByteCount\" in \"ZACwire\" tab" },
+            { "092", "ZACwire - wrong lenght of read command" },
+            { "099", "LIN - wrong selection for \"LOM\" command - either use LOM0, LOM1, or LOM2" },
+            { "100", "LIN - wrong version selected" },
+            { "101", "LIN - wrong communication speed selected" },
+            { "102", "LIN - wrong CRC option selected" },
+            { "103", "LIN - wrong option for LIN open interface selected" },
+            { "104", "LIN - wrong length of LIN open interface command" },
+            { "105", "LIN - write/read: no low signal at trigger command" },
+            { "106", "LIN - write/read: no high signal on bus before Break Field should be sent" },
+            { "107", "LIN - write/read: no low signal during Break Field" },
+            { "108", "LIN - write/read: no high level for stop condition after Break Field" },
+            { "109", "LIN - write/read: no low level for start condition of SYNC Field" },
+            { "110", "LIN - write/read: no high level for stop condition after SYNC Field" },
+            { "111", "LIN - write/read: no low level for start condition of PID" },
+            { "112", "LIN - write/read: no high level for stop condition after PID" },
+            { "113", "LIN - write: no low level for start condition before Data Field" },
+            { "114", "LIN - write: no high level for stop condition after Data Field" },
+            { "115", "LIN - write: no low level closeFlag: 1 for start condition before CRC Data Field" },
+            { "116", "LIN - write: no high level for stop condition after CRC Data Field" },
+            { "117", "LIN - read: no high level for last stop condition (CRC Data Field) of transmission detected" },
+            { "118", "LIN - read: no high level for stop condition of PID detected --> Test of PINB.0 at SSC CB" },
+            { "119", "LIN - read: no low level for start condition of 1st Data Field from slave detected" },
+            { "120", "LIN - read: no high level for stop condition of 1st Data Field from slave detected" },
+            { "121", "LIN - read: no low level for start condition of 2nd Data Field from slave detected" },
+            { "122", "LIN - read: no high level for stop condition of 2nd Data Field from slave detected" },
+            { "123", "LIN - read: no low level for start condition of 3rd Data Field from slave detected" },
+            { "124", "LIN - read: no high level for stop condition of 3rd Data Field from slave detected" },
+            { "125", "LIN - read: no low level for start condition of 4th Data Field from slave detected" },
+            { "126", "LIN - read: no high level for stop condition of 4th Data Field from slave detected" },
+            { "127", "LIN - read: no low level for start condition of 5th Data Field from slave detected" },
+            { "128", "LIN - read: no high level for stop condition of 5th Data Field from slave detected" },
+            { "129", "LIN - read: no low level for start condition of 6th Data Field from slave detected" },
+            { "130", "LIN - read: no high level for stop condition of 6th Data Field from slave detected" },
+            { "131", "LIN - read: no low level for start condition of 7th Data Field from slave detected" },
+            { "132", "LIN - read: no high level for stop condition of 7th Data Field from slave detected" },
+            { "133", "LIN - read: no low level for start condition of 8th Data Field from slave detected" },
+            { "134", "LIN - read: no high level for stop condition of 8th Data Field from slave detected" },
+            { "135", "LIN - read: no low level for start condition of CRC Data Field from slave detected" },
+            { "140", "analog read - wrong value channel: channel selection {0 .. 4" },
+            { "150", "OWI - wrong length of OWI read command" },
+            { "151", "OWI - wrong selection for OWI read bytes" },
+            { "160", "I²C - query: no repeated start condition on the bus" },
+            { "161", "I²C - query: no address ACK from slave" },
+            { "162", "I²C - query: no data ACK from slave" },
+            { "163", "I²C - query: master could not put NACK on the bus" },
+            { "200", "SENT - open: wrong command length" },
+            { "201", "SENT - open: wrong selection of 3rd character " },
+            { "202", "SENT - open: wrong selection of used SENT interface pin" },
+            { "203", "SENT - open: wrong selection of TICK time - TICK Time will now be measured automatically" },
+            { "204", "SENT - open: wrong selection for check of TICK time - TICK Time will now be measured automatically & Limit is set to 0" },
+            { "205", "SENT - open: wrong sele closeFlag: 1ction of number of nibbles in the data stream - lower limitation" },
+            { "206", "SENT - open: wrong selection of number of nibbles in the data stream - upper limitation" },
+            { "207", "SENT - open: wrong selection for CRC check enabled" },
+            { "208", "SENT - open: wrong selection for CRC version" },
+            { "209", "SENT - open: wrong selection for additional string \"0000\" at the end of the SENT open command" },
+            { "210", "SENT - open: wrong selection of SENT data formating" },
+            { "219", "SENT - measure TICK time: wrong command length" },
+            { "220", "SENT - measure TICK time: no high signal on the SENT interface " },
+            { "221", "SENT - measure TICK time: no high-low transmission found" },
+            { "222", "SENT - measure TICK time: no low-high transmission found" },
+            { "223", "SENT - measure TICK time: measured low impuls was too long - check TICK time - overflow is caused at 200 µs TICK" },
+            { "224", "SENT - measure TICK time: no high signal after initialisation measurement" },
+            { "225", "SENT - measure TICK time: no high-low transmission during SYNC search" },
+            { "226", "SENT - measure TICK time: more than 255 nibbles tested and no SYNC found" },
+            { "230", "SENT - read: invalid input: number of bytes {1 .. 16}d" },
+            { "231", "SENT - read: Length of string doesn't fit to specified lenght. (Check e.g. 'ByteCount' parameter in SENT spreadsheet)" },
+            { "232", "SENT - read: no TICK time speciefied for comparison with TICK time limits --> check and send SENT open command" },
+            { "233", "SENT - read: measured TICK time doesn't fir to specified TICK time --> check range check and specified TICK time" },
+            { "234", "SENT - read: no initial high-low transmission found" },
+            { "235", "SENT - read: no high-low transmission found for the 2nd acquired data nibble" },
+            { "236", "SENT - read: no high-low transmission found for the 3rd acquired data nibble" },
+            { "237", "SENT - read: more than 255 nibbles tested and no SYNC found" },
+            { "238", "SENT - read: more than 255 nibbles tested and no SYNC found" },
+            { "241", "SENT - SDM: Length of string doesn't fit to specified lenght. " },
+            { "242", "SENT - SDM: no TICK time speciefied for comparison with TICK time limits --> check and send SENT open command" },
+            { "243", "SENT - SDM: measured TICK time doesn't fir to specified TICK time --> check range check and specified TICK time" },
+            { "244", "SENT - SDM: no start bit (bit #3) found in the status nibble" },
+            { "245", "SENT - SDM: no initial high-low transmission found" },
+            { "246", "SENT - SDM: no high-low transmission found for the 2nd acquired data nibble" },
+            { "247", "SENT - SDM: no high-low transmission found for the 3rd acquired data nibble" },
+            { "248", "SENT - SDM: more than 255 nibbles tested and no SYNC found" },
+            { "249", "SENT - SDM: more than 255 nibbles tested and no SYNC found" },
+            { "250", "SENT - SDM: invalid input: number of bytes {1 .. 16}d" },
+            { "263", "SENT - read: wrong feedback for 4 inverted bits " },
+        };
+
         // Helper methods
-        private void HandleError(string resp)
+        // Converted from MATLAB CBerror(): looks up the error message for the given code
+        // and throws an exception with the same format as the original MATLAB error().
+        protected void HandleError(string resp)
         {
             if (!string.IsNullOrEmpty(resp))
             {
-                throw new Exception($"MBC Error: {resp}");
+                string message = CBErrorCodeTable.TryGetValue(resp, out string? msg) ? msg : string.Empty;
+                throw new Exception($"{resp}: {message}");
             }
         }
 
@@ -611,6 +764,113 @@ namespace BurnInApp
                 }
             }
             return count;
+        }
+
+        // Connects the TCP client with the given index (0-based) to the specified server.
+        public bool ConnectToTCPServer(int index, string ipAddr, double connectTimeoutSeconds)
+        {
+            bool ret = false;
+            if (Mode == MBCModeEnum.TCP)
+            {
+                TcpClients[index].ConnectToServer(ipAddr, TcpPort, connectTimeoutSeconds);
+                if (TcpClients[index].Status.GetStatus() != TCPClientStatusEnum.CONNECTED)
+                {
+                    if (!TcpClientConnectErrorReported[index])
+                    {
+                        StatusFile?.AddMsg(MsgLevel.ERROR, $"Connect to {TcpClients[index].Host} failed: {TcpClients[index].StrError}\n");
+                        TcpClientConnectErrorReported[index] = true;
+                    }
+                    throw new Exception(TcpClients[index].StrError);
+                }
+                StatusFile?.AddMsg(MsgLevel.INFO, $"Connected {TcpClients[index].Host}\n");
+                TcpClientConnectErrorReported[index] = false;
+                ret = true;
+            }
+            return ret;
+        }
+
+        // Tries to reconnect to the MBC (serial port in I2C mode or the TCP client with the given index in TCP mode).
+        public int TryReconnect(int index = 0)
+        {
+            if (Mode == MBCModeEnum.I2C)
+            {
+                for (int i = 1; i <= NumRepeat; i++)
+                {
+                    Console.WriteLine($"Trying to reconnect: {i} of {NumRepeat}");
+                    try
+                    {
+                        if (_serialPort != null && _serialPort.IsOpen)
+                        {
+                            _serialPort.Close();
+                        }
+                        Status = "closed";
+                        SerOpen();
+                        Reset();
+                        return 1;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Reconnect failed: {e.Message} Waiting...");
+                        if (i < 10)
+                        {
+                            Thread.Sleep((int)(Math.Pow(1.3, i) * 1000));
+                        }
+                    }
+                }
+
+                if (OperatingSystem.IsWindows())
+                {
+                    for (int i = 1; i <= NumRepeat; i++)
+                    {
+                        var ports = FindSerialPorts();
+                        foreach (var port in ports)
+                        {
+                            try
+                            {
+                                Console.WriteLine($"Trying connect to {port}: {i} of {NumRepeat}");
+                                using var testPort = new SerialPort(port, 19200) { ReadTimeout = 1000 };
+                                testPort.Open();
+                                testPort.WriteLine("V");
+                                string resp = testPort.ReadLine();
+                                testPort.Close();
+                                Console.WriteLine($"MBC Version: {resp}");
+                                Port = port;
+                                SerOpen();
+                                Reset();
+                                return 1;
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine($"Connect to {port} failed: {e.Message} Waiting...");
+                                if (i < 10)
+                                {
+                                    Thread.Sleep((int)(Math.Pow(1.3, i) * 1000));
+                                }
+                            }
+                        }
+                    }
+                }
+                return 0;
+            }
+            else
+            {
+                for (int i = 1; i <= NumRepeat; i++)
+                {
+                    Console.WriteLine($"\n...Trying to reconnect: {i} of {NumRepeat}");
+                    if (TcpClients[index].TryReconnectToServer(10))
+                    {
+                        StatusFile?.AddMsg(MsgLevel.INFO, $"Reconnected to {TcpClients[index].Host}\n");
+                        return 1;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Reconnect failed: Waiting {Math.Pow(1.35, i):F2} s...");
+                        StatusFile?.AddMsg(MsgLevel.WARNING, $"Reconnect to {TcpClients[index].Host} failed: {TcpClients[index].StrError}\n");
+                        Thread.Sleep((int)(Math.Pow(1.35, i) * 1000));
+                    }
+                }
+                return 0;
+            }
         }
 
         // IDisposable implementation
@@ -656,44 +916,291 @@ namespace BurnInApp
         }
     }
 
-    // Placeholder classes - you'll need to implement these based on your MATLAB code
+    /// <summary>
+    /// TCP client used to communicate with an Ethernet based MBC.
+    /// Converted from the MATLAB class TCPClient by Torsten Blochwitz Electronics & Software for InfraSolid.
+    /// Uses System.Net.Sockets.TcpClient, so it works the same way on Windows and Linux.
+    /// </summary>
     public class TCPClient : IDisposable
     {
-        public int NumRepeat { get; set; }
-        public TCPClientStatus Status { get; set; } = new TCPClientStatus();
-        public string Host { get; set; } = string.Empty;
-        public string StrError { get; set; } = string.Empty;
+        public string Host { get; private set; } = string.Empty;
+        public int Port { get; private set; }
+        public TCPClientStatus Status { get; } = new TCPClientStatus();
+        public string StrError { get; private set; } = string.Empty;
+        public int NumRepeat { get; set; } = 10;
 
-        public void Send(string message) { }
-        public string ReceiveLine() { return string.Empty; }
-        public bool TryReconnectToServer(int attempts) { return false; }
-        public void Dispose() { }
-    }
+        private TcpClient? _client;
+        private NetworkStream? _stream;
+        private StreamReader? _reader;
+        private StreamWriter? _writer;
 
-    public class TCPClientStatus
-    {
-        public TCPClientStatusEnum GetStatus() { return TCPClientStatusEnum.DISCONNECTED; }
-    }
-
-    public enum TCPClientStatusEnum
-    {
-        DISCONNECTED,
-        CONNECTED
-    }
-
-    public class StatusFile
-    {
-        public StatusFile(string folder, string name) { }
-        public void AddMsg(MsgLevel level, string message) 
+        public TCPClient()
         {
-            Debug.WriteLine($"[{level}] {message}");
+            Status.SetStatus(TCPClientStatusEnum.DISCONNECTED);
+        }
+
+        public bool ConnectToServer(string host, int port, double connectTimeoutSeconds)
+        {
+            // Do nothing if we are already connected to the same host/port.
+            if (Status.GetStatus() == TCPClientStatusEnum.CONNECTED)
+            {
+                if (!string.Equals(Host, host, StringComparison.Ordinal) || Port != port)
+                {
+                    Disconnect();
+                }
+            }
+
+            Host = host;
+            Port = port;
+            return TryReconnectToServer(connectTimeoutSeconds);
+        }
+
+        public bool TryReconnectToServer(double connectTimeoutSeconds)
+        {
+            StrError = string.Empty;
+            try
+            {
+                try
+                {
+                    Dns.GetHostAddresses(Host);
+                }
+                catch (Exception)
+                {
+                    StrError = $"Error while (re)connecting to {Host}:\nName cannot be resolved.";
+                    Status.SetStatus(TCPClientStatusEnum.ERROR);
+                    Disconnect();
+                    return false;
+                }
+
+                if (_client != null && _client.Connected)
+                {
+                    if (PingServer())
+                    {
+                        return true;
+                    }
+                    Disconnect();
+                }
+
+                _client = new TcpClient();
+                var connectTask = _client.ConnectAsync(Host, Port);
+                int timeoutMs = (int)Math.Max(connectTimeoutSeconds * 1000, 100);
+                if (!connectTask.Wait(timeoutMs))
+                {
+                    throw new TimeoutException($"IP address not found! Connection timed out after {connectTimeoutSeconds} s.");
+                }
+
+                _client.NoDelay = true; // equivalent of "EnableTransferDelay", false
+                _client.ReceiveTimeout = 5000;
+                _client.SendTimeout = 5000;
+
+                _stream = _client.GetStream();
+                _reader = new StreamReader(_stream, Encoding.ASCII);
+                _writer = new StreamWriter(_stream, Encoding.ASCII) { NewLine = "\n", AutoFlush = true };
+
+                Status.SetStatus(TCPClientStatusEnum.CONNECTED);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                StrError = $"Error while (re)connecting to {Host}:\n{ex.Message} For more information\n";
+                Status.SetStatus(TCPClientStatusEnum.ERROR);
+                Disconnect();
+                return false;
+            }
+        }
+
+        public void Disconnect()
+        {
+            try
+            {
+                _reader?.Dispose();
+                _writer?.Dispose();
+                _stream?.Dispose();
+                _client?.Close();
+                _client?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Could not delete TCP client: {ex.Message}");
+            }
+            finally
+            {
+                _reader = null;
+                _writer = null;
+                _stream = null;
+                _client = null;
+            }
+        }
+
+        public bool PingServer()
+        {
+            if (Status.GetStatus() != TCPClientStatusEnum.CONNECTED)
+            {
+                return false;
+            }
+
+            try
+            {
+                _writer!.WriteLine("P");
+                string? pong = _reader!.ReadLine();
+                return pong == "Pong";
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool Send(string message)
+        {
+            if (Status.GetStatus() != TCPClientStatusEnum.CONNECTED)
+            {
+                return false;
+            }
+
+            for (int i = 1; i <= NumRepeat; i++)
+            {
+                try
+                {
+                    _writer!.WriteLine(message);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"The error: {ex.Message} has occurred during write after: {i}");
+                    Status.SetStatus(TCPClientStatusEnum.ERROR);
+                    if (i >= NumRepeat)
+                    {
+                        return false;
+                    }
+                    if (!TryReconnectToServer(10) && i >= NumRepeat)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public bool Receive(int size, out string msg)
+        {
+            msg = string.Empty;
+            if (Status.GetStatus() != TCPClientStatusEnum.CONNECTED)
+            {
+                return false;
+            }
+
+            for (int i = 1; i <= NumRepeat; i++)
+            {
+                try
+                {
+                    char[] buffer = new char[size];
+                    int totalRead = 0;
+                    while (totalRead < size)
+                    {
+                        int read = _reader!.Read(buffer, totalRead, size - totalRead);
+                        if (read == 0)
+                        {
+                            throw new IOException("Connection closed by remote host.");
+                        }
+                        totalRead += read;
+                    }
+                    msg = new string(buffer);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"The error: {ex.Message} has occurred during read after: {i}");
+                    Status.SetStatus(TCPClientStatusEnum.ERROR);
+                    if (i >= NumRepeat)
+                    {
+                        return false;
+                    }
+                    if (!TryReconnectToServer(10) && i >= NumRepeat)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public string ReceiveLine()
+        {
+            if (Status.GetStatus() != TCPClientStatusEnum.CONNECTED)
+            {
+                return string.Empty;
+            }
+
+            for (int i = 1; i <= NumRepeat; i++)
+            {
+                try
+                {
+                    return _reader!.ReadLine() ?? string.Empty;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"The error: {ex.Message} has occurred during read after: {i}");
+                    Status.SetStatus(TCPClientStatusEnum.ERROR);
+                    if (i >= NumRepeat)
+                    {
+                        return string.Empty;
+                    }
+                    if (!TryReconnectToServer(10) && i >= NumRepeat)
+                    {
+                        return string.Empty;
+                    }
+                }
+            }
+            return string.Empty;
+        }
+
+        public void Dispose()
+        {
+            Disconnect();
+            GC.SuppressFinalize(this);
         }
     }
 
-    public enum MsgLevel
+    /// <summary>
+    /// Thread-safe status wrapper for TCPClient. Converted from the MATLAB class TCPClientStatus.
+    /// </summary>
+    public class TCPClientStatus
     {
-        INFO,
-        WARNING,
-        ERROR
+        private readonly object _lock = new object();
+        private readonly string[] _strStatus = { "ERROR", "Disconnected", "Connected" };
+        private TCPClientStatusEnum _status = TCPClientStatusEnum.DISCONNECTED;
+
+        public void SetStatus(TCPClientStatusEnum v)
+        {
+            lock (_lock)
+            {
+                _status = v;
+            }
+        }
+
+        public TCPClientStatusEnum GetStatus()
+        {
+            lock (_lock)
+            {
+                return _status;
+            }
+        }
+
+        public string GetStatusString()
+        {
+            lock (_lock)
+            {
+                // _status is -1 (ERROR), 0 (DISCONNECTED) or 1 (CONNECTED)
+                return _strStatus[(int)_status + 1];
+            }
+        }
+    }
+
+    public enum TCPClientStatusEnum : sbyte
+    {
+        ERROR = -1,
+        DISCONNECTED = 0,
+        CONNECTED = 1
     }
 }
