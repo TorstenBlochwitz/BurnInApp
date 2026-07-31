@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -135,27 +137,20 @@ namespace BurnInApp
             double vdc = 0.0;
             int iOther = i == 1 ? 2 : 1;
             int[] statusVDC = { DCDCConv.GetVDCSwitchStatus(1), DCDCConv.GetVDCSwitchStatus(2) };
-            bool timerManipulated = false;
-            ushort tSwitchOff = DCDCConv.GetTimer();
-            if (tSwitchOff < 3 && statusVDC[i - 1] > 0)
-            {
-                timerManipulated = true;
-                DCDCConv.SetTimer(10);
-            }
             if (statusVDC[i - 1] > 0)
             {
+                // manipulate timer to ensure it does not switch off everything
+                ushort tSwitchOff = DCDCConv.GetTimer();
+                DCDCConv.SetTimer(0);
                 DCDCConv.SwitchVDC(iOther, 0);
                 DCDCConv.SwitchVDC(i, 1);
                 MainBoard.SetMUX(GetVDCChannel(i));
                 vdc = MainBoard.Adc!.GetVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
                 MainBoard.SetMUX(-1);
+                DCDCConv.SetTimer(tSwitchOff);
                 DCDCConv.SwitchVDC(1, statusVDC[0]);
                 DCDCConv.SwitchVDC(2, statusVDC[1]);
                 status = true;
-            }
-            if (timerManipulated)
-            {
-                DCDCConv.SetTimer(tSwitchOff);
             }
             return (status, vdc);
         }
@@ -167,32 +162,24 @@ namespace BurnInApp
             double vdc = 0.0;
             int iOther = i == 1 ? 2 : 1;
             int[] statusVDC = { DCDCConv.GetVDCSwitchStatus(1), DCDCConv.GetVDCSwitchStatus(2) };
-            bool timerManipulated = false;
-            ushort tSwitchOff = DCDCConv.GetTimer();
-            if (tSwitchOff < 3 && statusVDC[i - 1] > 0)
-            {
-                timerManipulated = true;
-                DCDCConv.SetTimer(10);
-            }
             if (statusVDC[i - 1] > 0)
             {
+                ushort tSwitchOff = DCDCConv.GetTimer();
+                DCDCConv.SetTimer(0);
                 DCDCConv.SwitchVDC(iOther, 0);
                 DCDCConv.SwitchVDC(i, 1);
-                MainBoard.SetMUX(GetVDCChannel(i));
                 var vMeas = new double[n];
                 for (int j = 0; j < n; j++)
                 {
+                    MainBoard.SetMUX(GetVDCChannel(i));
                     vMeas[j] = MainBoard.Adc!.GetVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
                 }
                 MainBoard.SetMUX(-1);
+                DCDCConv.SetTimer(tSwitchOff);
                 DCDCConv.SwitchVDC(1, statusVDC[0]);
                 DCDCConv.SwitchVDC(2, statusVDC[1]);
-                vdc = RemoveMinMaxAndMean(vMeas, n, out _);
+                vdc = TrimmedMean(vMeas);
                 status = true;
-            }
-            if (timerManipulated)
-            {
-                DCDCConv.SetTimer(tSwitchOff);
             }
             return (status, vdc);
         }
@@ -210,23 +197,23 @@ namespace BurnInApp
             }
             try
             {
-                MainBoard.SetMUX(channel < 60 ? GetVDCChannel(1) : GetVDCChannel(2));
+                int vdcChannel = channel < 60 ? GetVDCChannel(1) : GetVDCChannel(2);
                 var vMeas = new double[n];
                 for (int j = 0; j < n; j++)
                 {
+                    MainBoard.SetMUX(vdcChannel);
                     vMeas[j] = MainBoard.Adc!.GetVoltage(ADS1115.CONFIG_MUX_SINGLE_0, ADS1115.GAIN_TWOTHIRDS_6_144);
                 }
-                vdc = RemoveMinMaxAndMean(vMeas, n, out int nAfter1);
-                n = nAfter1;
+                vdc = TrimmedMean(vMeas);
                 if (measurementOK)
                 {
-                    MainBoard.SetMUX(channel);
                     vMeas = new double[n];
                     for (int j = 0; j < n; j++)
                     {
+                        MainBoard.SetMUX(channel);
                         vMeas[j] = MainBoard.Adc!.GetVoltage(ADS1115.CONFIG_MUX_SINGLE_0, ADS1115.GAIN_TWOTHIRDS_6_144);
                     }
-                    vr = RemoveMinMaxAndMean(vMeas, n, out _);
+                    vr = TrimmedMean(vMeas);
                     if (vr < 0.01)
                     {
                         r = double.PositiveInfinity;
@@ -251,49 +238,35 @@ namespace BurnInApp
             return (r, vdc, vr);
         }
 
-        // Removes min and max value from the mean value computation if n > 3,
-        // matching the MATLAB implementation. Returns the reduced count via nAfter.
-        private static double RemoveMinMaxAndMean(double[] vMeas, int n, out int nAfter)
+        // Converted from MATLAB trimmedMean(): calculates the mean value of a vector.
+        // If the vector contains more than 3 elements, one occurrence each of the
+        // minimum and maximum values is excluded from the mean calculation.
+        private static double TrimmedMean(double[] vec)
         {
-            if (n > 3)
+            var list = new List<double>(vec);
+            if (list.Count > 3)
             {
-                double vMin = double.PositiveInfinity;
-                double vMax = double.NegativeInfinity;
-                for (int j = 0; j < n; j++)
+                int minIdx = 0;
+                for (int j = 1; j < list.Count; j++)
                 {
-                    if (vMeas[j] > vMax)
+                    if (list[j] < list[minIdx])
                     {
-                        vMax = vMeas[j];
-                    }
-                    if (vMeas[j] < vMin)
-                    {
-                        vMin = vMeas[j];
+                        minIdx = j;
                     }
                 }
-                bool removedMax = false;
-                bool removedMin = false;
-                for (int j = 0; j < n; j++)
+                list.RemoveAt(minIdx);
+
+                int maxIdx = 0;
+                for (int j = 1; j < list.Count; j++)
                 {
-                    if (!removedMax && vMeas[j] == vMax)
+                    if (list[j] > list[maxIdx])
                     {
-                        vMeas[j] = 0.0;
-                        removedMax = true;
-                    }
-                    if (!removedMin && vMeas[j] == vMin)
-                    {
-                        vMeas[j] = 0.0;
-                        removedMin = true;
+                        maxIdx = j;
                     }
                 }
-                n -= 2;
+                list.RemoveAt(maxIdx);
             }
-            nAfter = n;
-            double sum = 0;
-            for (int j = 0; j < vMeas.Length; j++)
-            {
-                sum += vMeas[j];
-            }
-            return sum / n;
+            return list.Average();
         }
 
         public (int ret, bool[] bShort) CheckShortCircuit(double[] vMax, double[] rExpected)

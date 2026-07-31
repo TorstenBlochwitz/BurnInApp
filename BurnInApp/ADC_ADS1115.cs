@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 
 namespace BurnInApp
@@ -16,6 +17,8 @@ namespace BurnInApp
         public int MPAddr { get; } = 0xE0;
         public byte COn { get; }
         public byte COff { get; }
+        public byte[] LastReadRaw { get; private set; } = new byte[] { 0, 0 };
+        public int NumRepeat { get; set; } = 5;
 
         public ADC_ADS1115(MBC_TB? mbc, int address, int offset, int mpAddr, byte cOn, byte cOff)
         {
@@ -65,9 +68,83 @@ namespace BurnInApp
 
         public double GetVoltageDiff(ADS1115 configMux, ADS1115 gain)
         {
-            // This mirrors the MATLAB implementation, which returns early and never
-            // executes the (currently unused) single-shot conversion polling logic below.
-            return GetVoltage(configMux, gain);
+            double v = 0.0;
+
+            configMux = ADS1115.CONFIG_MUX_SINGLE_0;
+
+            using (new I2CMultiplexerPCA9542A(Mbc, Offset, MPAddr, COn, COff))
+            {
+                // reads differential voltage between channel 0 and 1
+                // adapted from https://github.com/adafruit/Adafruit_ADS1X15
+                ushort config = 0;
+                config |= 0x0003; // ADS1X15_REG_CONFIG_CQUE_1CONV: Disable the comparator and put ALERT/RDY in high state (default)
+                config |= 0x0000; // ADS1X15_REG_CONFIG_CLAT_NONLAT: Non-latching (default val)
+                config |= 0x0000; // ADS1X15_REG_CONFIG_CPOL_ACTVLOW: Alert/Rdy active low   (default val)
+                config |= 0x0000; // ADS1X15_REG_CONFIG_CMODE_TRAD: Traditional comparator (default val)
+                config |= 0x0100; // ADS1X15_REG_CONFIG_MODE_SINGLE: Single Shot Mode (default)
+                config |= (ushort)gain;
+                config |= 0x0080; // RATE_ADS1115_128SPS (default)
+                config |= (ushort)configMux;
+                config |= 0x8000; // ADS1X15_REG_CONFIG_OS_SINGLE: Set to start a single-conversion
+
+                // write to config register
+                byte[] bytes = new byte[] { 0x01, (byte)(config >> 8), (byte)(config & 0xFF) };
+
+                for (int i = 1; i <= NumRepeat; i++)
+                {
+                    try
+                    {
+                        Mbc!.WriteBytesI2C(Address, Offset, bytes);
+
+                        // check if config arrived correctly at ADS1115
+                        byte[] status = Mbc.QueryBytesI2C(Address, Offset, 0x01, 1, 2);
+                        if (!MBC_USB_TCP.IsEqualMask(status, new byte[] { bytes[1], bytes[2] }, new byte[] { 0b11111111, 0b11111110 }))
+                        {
+                            Console.WriteLine("Problem1 in ADC: Incorrect config register");
+                            Mbc.HandleError("029");
+                        }
+                        // wait until conversion is complete
+                        Thread.Sleep(100);
+                        // read conversion result
+                        byte[] raw1 = Mbc.QueryBytesI2C(Address, Offset, 0x00, 1, 2);
+                        // Check if there was really a reading or if the last
+                        // conversion result was returned
+                        if (raw1.SequenceEqual(LastReadRaw))
+                        {
+                            Console.WriteLine("Problem2 in ADC: No conversion happened");
+                            Mbc.HandleError("029");
+                        }
+                        // read a second time to check if we read correct values
+                        byte[] raw2 = Mbc.QueryBytesI2C(Address, Offset, 0x00, 1, 2);
+                        if (!raw1.SequenceEqual(raw2))
+                        {
+                            Console.WriteLine("Problem3 in ADC: Wrong values read");
+                            Mbc.HandleError("029");
+                        }
+                        else
+                        {
+                            LastReadRaw = raw1;
+                            // convert to voltage, considering gain
+                            v = ComputeVolts(gain, raw1);
+                            return v;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        if (Debug)
+                        {
+                            Mbc!.StatusFile?.AddMsg(MsgLevel.WARNING, "Communication problem during ADC measurement");
+                        }
+
+                        if (i == NumRepeat)
+                        {
+                            throw;
+                        }
+                    }
+                }
+            }
+
+            return v;
         }
 
         public double ComputeVolts(ADS1115 gain, byte[] raw)

@@ -295,6 +295,74 @@ classdef MBC_USB_TCP < handle
             ret = 1;
         end
 
+        %% send bytes to the I2C device addr + offset
+        %% addr is the 8 bit representation of the I2C address
+        %% first element of bytes is sent first
+        function ret = writeBytesI2CCheck(this, addr, offset, bytes, mask)
+            ret = 0;
+            [I2Caddr, doWrite] = this.adaptAddr(addr, offset);
+            if ~doWrite
+                return
+            end
+
+            this.switchI2C(0);
+            
+            str="";
+            for index = 1:length(bytes)
+               str = str + dec2hex(bytes(index),2); 
+            end
+            str=convertStringsToChars(str);
+            
+            %fprintf('%s\n', [ 'IW_'  dec2hex(addr/2+offset,2) dec2hex(length(bytes),3) str 13]);
+            msg = [ 'IW_'  dec2hex(I2Caddr,2) dec2hex(length(bytes),3) str];
+            for i=1:1:this.nRepeat
+                try
+                    resp = this.writeMessage(msg, offset);
+            
+                    if ~isempty(resp)
+                        this.CBerror(resp);
+                    end
+
+                    % check read stability
+                    read1 = this.readBytesI2C(addr, offset, length(bytes));
+                    read2 = this.readBytesI2C(addr, offset, length(bytes));
+                    if ~isequal(read1, read2)
+                        fprintf('Problem1 in checking returned bytes\n');
+                        this.CBerror('029');
+                    end
+                    %check returned value
+                    if isequalmask(read2, bytes, mask)
+                    %if isequal(read2, bytes)
+                       break
+                    else
+                        fprintf('Problem2 in checking returned bytes\n');
+                        this.CBerror('029');
+                    end
+                catch e
+                    if this.debug
+                        if offset == 0
+                            strAddr = sprintf("0x%X", addr);
+                        else
+                            strAddr = sprintf("0x%X, offset = %d", addr, offset);
+                        end
+                        this.statusFile.addMsg(msgLevel.WARNING, sprintf("%d. %s communication problem in writeBytesI2C: %s\naddr = %s, msg = %s\n", i, this.strMode, e.message, strAddr, msg));
+                    end
+                    if this.mode == MBCModeEnum.I2C
+                        if i>this.nRepeat/2
+                            if this.debug
+                                this.statusFile.addMsg(msgLevel.WARNING, sprintf("\n--> Reseting I2C Bus.\n"));
+                            end
+                            this.resetI2C();
+                        end
+                    end
+                    if i==this.nRepeat
+                        rethrow(e);
+                    end
+                end
+            end
+            ret = 1;
+        end
+
         %% send the nCmd bytes cmd to the I2C device addr + offset, returns nRead bytes
         %% addr is the 8 bit representation of the I2C address
         function bytes = queryBytesI2C(this, addr, offset, cmd, nCmd, nRead)
@@ -967,7 +1035,7 @@ classdef MBC_USB_TCP < handle
                 '026' '';
                 '027' '';
                 '028' '';
-                '029' '';
+                '029' 'I²C - write and check: The written value could not be correctly retrieved';
                 '030' 'I²C - Timeout! Master (CB) was not able to drive bus line';
                 '031' 'I²C - start condition not sent';
                 '032' 'I²C - read: no address-ack from slave --> try other I²C device address';

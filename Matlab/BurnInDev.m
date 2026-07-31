@@ -131,16 +131,11 @@ classdef BurnInDev < handle
             %Remember if VDCs are switched on
             statusVDC(1) = this.DCDCConv.getVDCswitchStatus(1);
             statusVDC(2) = this.DCDCConv.getVDCswitchStatus(2);
-            %check switchOffTimer of ATtiny if we are close to switchOff time
-            timerManipulated = false;
-            tSwitchOff = this.DCDCConv.getTimer();
-            if (tSwitchOff < 3) && (statusVDC(i) > 0)
-                % increase timer to enforce measurement
-                timerManipulated = true;
-                this.DCDCConv.setTimer(10);
-            end
             %is VDC switched on?
             if (statusVDC(i) > 0)
+                % manipulate timer to ensure it does not switch off everything
+                tSwitchOff = this.DCDCConv.getTimer();
+                this.DCDCConv.setTimer(0);
                 %switch off other VDC if switched on to not influence the measurement
                 this.DCDCConv.switchVDC(iOther, 0);
                 %switch on
@@ -154,14 +149,17 @@ classdef BurnInDev < handle
                 else
                     VDC = dmm.meas_VDC();        
                 end
+                if VDC < 1.0
+                    %Breakpoint!
+                    fprintf("VDC is small: %f\n", VDC);
+                end
                 this.mainBoard.setMUX(-1);
+                %switch timer back
+                this.DCDCConv.setTimer(tSwitchOff);
                 %switch VDC back
                 this.DCDCConv.switchVDC(1, statusVDC(1));
                 this.DCDCConv.switchVDC(2, statusVDC(2));
                 status = true;
-            end
-            if timerManipulated
-                this.DCDCConv.setTimer(tSwitchOff);
             end
         end
         function [status, VDC] = measureVDCmean(this, i, n, dmm)
@@ -193,26 +191,20 @@ classdef BurnInDev < handle
             statusVDC(1) = this.DCDCConv.getVDCswitchStatus(1);
             statusVDC(2) = this.DCDCConv.getVDCswitchStatus(2);
 
-            %check switchOffTimer of ATtiny if we are close to switchOff time
-            timerManipulated = false;
-            tSwitchOff = this.DCDCConv.getTimer();
-            if (tSwitchOff < 3) && (statusVDC(i) > 0)
-                % increase timer to enforce measurement
-                timerManipulated = true;
-                this.DCDCConv.setTimer(10);
-            end
             %is VDC switched on?
             if (statusVDC(i) > 0)
+                tSwitchOff = this.DCDCConv.getTimer();
+                this.DCDCConv.setTimer(0);
                 %switch off other VDC if switched on to not influence the measurement
                 this.DCDCConv.switchVDC(iOther, 0);
                 %switch on
                 this.DCDCConv.switchVDC(i, 1);
                 %do measurement
-                this.mainBoard.setMUX(this.GetVDCChannel(i));
                 %wait a short time to let everything settle down -> does not help!
                 %pause(0.1);
                 Vmeas = zeros(1, n, 'double');
                 for j = 1:1:n
+                    this.mainBoard.setMUX(this.GetVDCChannel(i));
                     if useADC
                         Vmeas(j) = this.mainBoard.adc.getVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
                     else
@@ -222,29 +214,12 @@ classdef BurnInDev < handle
                 end
                 this.mainBoard.setMUX(-1);
                 %switch VDC back
+                this.DCDCConv.setTimer(tSwitchOff);
                 this.DCDCConv.switchVDC(1, statusVDC(1));
                 this.DCDCConv.switchVDC(2, statusVDC(2));
-                %remove min and max from mean value if n > 3
-                if n > 3
-                    Vmin = min(Vmeas);
-                    Vmax = max(Vmeas);
-                    for j = 1:1:n
-                        if Vmeas(j) == Vmax
-                            Vmeas(j) = 0.0;
-                            Vmax = -1e300;  %make sure it is done once only
-                        end
-                        if Vmeas(j) == Vmin
-                            Vmeas(j) = 0.0;
-                            Vmin = -1e300;  %make sure it is done once only
-                        end                        
-                    end
-                    n = n - 2;
-                end
-                VDC = sum(Vmeas) / n;
+                
+                VDC = trimmedMean(Vmeas);
                 status = true;
-            end
-            if timerManipulated
-                this.DCDCConv.setTimer(tSwitchOff);
             end
         end
         function [R, VDC, VR] = meas_R(this, channel, n, dmm)
@@ -271,68 +246,40 @@ classdef BurnInDev < handle
                         useADC = true; %use ADC    
                     end
                 end
-                %measure VDC
-                if channel < 60
-                    %VDC1
-                    this.mainBoard.setMUX(this.GetVDCChannel(1));
-                else
-                    %VDC2
-                    this.mainBoard.setMUX(this.GetVDCChannel(2));
-                end
                 Vmeas = zeros(1, n, 'double');
                 for j = 1:1:n
+                    %measure VDC
+                    if channel < 60
+                        %VDC1
+                        this.mainBoard.setMUX(this.GetVDCChannel(1));
+                    else
+                        %VDC2
+                        this.mainBoard.setMUX(this.GetVDCChannel(2));
+                    end
                     if useADC
-                        Vmeas(j) = this.mainBoard.adc.getVoltage(ADS1115.CONFIG_MUX_SINGLE_0, ADS1115.GAIN_TWOTHIRDS_6_144);
-                        %Vmeas(j) = this.mainBoard.adc.getVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
+                        %Vmeas(j) = this.mainBoard.adc.getVoltage(ADS1115.CONFIG_MUX_SINGLE_0, ADS1115.GAIN_TWOTHIRDS_6_144);
+                        Vmeas(j) = this.mainBoard.adc.getVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
                     else
                         Vmeas(j) = dmm.meas_VDC();        
                     end
-                end
-                %remove min and max from mean value if n > 3
-                if n > 3
-                    Vmin = min(Vmeas);
-                    Vmax = max(Vmeas);
-                    for j = 1:1:n
-                        if Vmeas(j) == Vmax
-                            Vmeas(j) = 0.0;
-                            Vmax = -1e300;  %make sure it is done once only
-                        end
-                        if Vmeas(j) == Vmin
-                            Vmeas(j) = 0.0;
-                            Vmin = -1e300;  %make sure it is done once only
-                        end                        
+                    if Vmeas(j) < 1.0
+                        %Breakpoint!
+                        fprintf("VDC is small: %f\n", Vmeas(j));
                     end
-                    n = n - 2;
                 end
-                VDC = sum(Vmeas) / n;
+                VDC = trimmedMean(Vmeas);
                 if measurementOK
-                    this.mainBoard.setMUX(channel);
                     Vmeas = zeros(1, n, 'double');
                     for j = 1:1:n
+                        this.mainBoard.setMUX(channel);
                         if useADC
-                            Vmeas(j)  = this.mainBoard.adc.getVoltage(ADS1115.CONFIG_MUX_SINGLE_0, ADS1115.GAIN_TWOTHIRDS_6_144);
-                            %Vmeas(j) = this.mainBoard.adc.getVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
+                            %Vmeas(j)  = this.mainBoard.adc.getVoltage(ADS1115.CONFIG_MUX_SINGLE_0, ADS1115.GAIN_TWOTHIRDS_6_144);
+                            Vmeas(j) = this.mainBoard.adc.getVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
                         else
                             Vmeas(j) = dmm.meas_VDC();
                         end
                     end
-                    %remove min and max from mean value if n > 3
-                    if n > 3
-                        Vmin = min(Vmeas);
-                        Vmax = max(Vmeas);
-                        for j = 1:1:n
-                            if Vmeas(j) == Vmax
-                                Vmeas(j) = 0.0;
-                                Vmax = -1e300;  %make sure it is done once only
-                            end
-                            if Vmeas(j) == Vmin
-                                Vmeas(j) = 0.0;
-                                Vmin = -1e300;  %make sure it is done once only
-                            end                        
-                        end
-                        n = n - 2;
-                    end
-                    VR = sum(Vmeas) / n;
+                    VR = trimmedMean(Vmeas);
                     if VR < 0.01
                         R = inf;
                     else
@@ -454,11 +401,7 @@ classdef BurnInDev < handle
             statusVDC2 = this.DCDCConv.getVDCswitchStatus(2);
             %extend switchOffTimer of ATtiny if we are close to switchOff time
             tSwitchOff = this.DCDCConv.getTimer();
-            if tSwitchOff > 0 && tSwitchOff < 10
-                % 10 min should be sufficient
-                %fprintf("Extend Timer because: %d\n", tSwitchOff);
-                this.DCDCConv.setTimer(10);
-            end
+            this.DCDCConv.setTimer(0);
             %switch VDC2 off to make sure it does not influence the
             %measurement of the upper half
             this.DCDCConv.switchVDC(2, 0);
@@ -534,6 +477,8 @@ classdef BurnInDev < handle
                 k = k + 1;
                 i = i + nCurSkip;
             end
+            %set timer back
+            this.DCDCConv.setTimer(tSwitchOff);
             %set VDC's back
             this.DCDCConv.switchVDC(1, statusVDC1);
             this.DCDCConv.switchVDC(2, statusVDC2);

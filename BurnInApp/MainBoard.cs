@@ -143,7 +143,7 @@ namespace BurnInApp
                     Console.WriteLine("LED: Off");
                 }
             }
-            ret = WriteMuxSafely(bytes);
+            Mbc!.WriteBytesI2CCheck(0x40, Offset, bytes, new byte[] { 0xFF, 0xFF });
             StatusLED = v > 0;
             StatusPCF8575DWR = bytes;
             return ret;
@@ -179,7 +179,7 @@ namespace BurnInApp
                     Console.WriteLine($"bytes = 0x{val:X} (0b{Convert.ToString(val, 2)})");
                 }
             }
-            WriteMuxSafely(bytes);
+            Mbc!.WriteBytesI2CCheck(0x40, Offset, bytes, new byte[] { 0xFF, 0xFF });
             // store the values in status after sending to ensure it is the
             // correct value in case an exception was thrown
             StatusPCF8575DWR = bytes;

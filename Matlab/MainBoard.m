@@ -112,8 +112,8 @@ classdef MainBoard < handle
                     fprintf('LED: Off\n');
                 end
             end
-            %this.mbc.writeBytesI2C(0x40, this.offset, bytes);
-            ret = this.writeMuxSafely(bytes);
+            this.mbc.writeBytesI2CCheck(0x40, this.offset, bytes, [0xFF, 0xFF]);
+            %ret = this.writeMuxSafely(bytes);
             this.statusLED = v > 0;
             this.statusPCF8575DWR = bytes;
         end
@@ -142,8 +142,8 @@ classdef MainBoard < handle
                     fprintf('bytes = 0x%X (0b%s)\n', val, dec2bin(val));
                 end
             end
-            %this.mbc.writeBytesI2C(0x40, this.offset, bytes);
-            ret = this.writeMuxSafely(bytes);
+            this.mbc.writeBytesI2CCheck(0x40, this.offset, bytes, [0xFF, 0xFF]);
+            %ret = this.writeMuxSafely(bytes);
             %store the values in status after sending to ensure it is the
             %correct value in case an exception was thrown
             this.statusPCF8575DWR = bytes;

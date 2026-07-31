@@ -19,12 +19,12 @@ classdef I2CMultiplexerPCA9542A < handle
             this.mbc=MBC;
             this.offset = offset;
             this.MPaddr = MPaddr;
-            this.cOn = cOn;
-            this.cOff = cOff;
+            this.cOn = uint8(cOn);
+            this.cOff = uint8(cOff);
             
             %switch channel On in constructor
             if ~isempty(this.mbc) && this.MPaddr ~= 0
-                this.mbc.writeBytesI2C(this.MPaddr, this.offset, this.cOn);
+                this.mbc.writeBytesI2CCheck(this.MPaddr, this.offset, this.cOn, 0x07);
             end
         end
         
@@ -32,7 +32,7 @@ classdef I2CMultiplexerPCA9542A < handle
             %switch channel Off in destructor
             try
                 if ~isempty(this.mbc) && this.MPaddr ~= 0
-                    this.mbc.writeBytesI2C(this.MPaddr, this.offset, this.cOff);
+                    this.mbc.writeBytesI2CCheck(this.MPaddr, this.offset, this.cOff, 0x07);
                 end
             catch
             end

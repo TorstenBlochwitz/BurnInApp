@@ -8,6 +8,8 @@ classdef ADC_ADS1115 < handle
         MPaddr = 0xE0; %Address of I2C Multiplexer
         cOn;    %command to switch I2C channel on
         cOff;   %command to switch I2C channel off
+        lastReadRaw = [uint8(0) uint8(0)];
+        nRepeat = 5;
     end
     
     methods
@@ -51,8 +53,10 @@ classdef ADC_ADS1115 < handle
         function v = getVoltageDiff(this, configMux, gain)
             v = 0.0;
 
-            v = this.getVoltage(configMux, gain);
-            return
+            %v = this.getVoltage(configMux, gain);
+            %return
+
+            configMux = ADS1115.CONFIG_MUX_SINGLE_0;
 
             I2Cmulti = I2CMultiplexerPCA9542A(this.mbc, this.offset, this.MPaddr, this.cOn, this.cOff);
             %reads differential voltage between channel 0 and 1
@@ -69,27 +73,50 @@ classdef ADC_ADS1115 < handle
             config = bitor(config, 0x8000); %ADS1X15_REG_CONFIG_OS_SINGLE: Set to start a single-conversion
             
             %write to config register
-            this.mbc.writeBytesI2C(this.address, this.offset, [0x01 uint8(bitshift(config, -8)) uint8(bitand(config, 0b0000000011111111))]);
-            %pause(0.1); %This was a try to wait some time before reading
-            %the voltage to avoid wrong measurement result during
-            %measureVDC during first measurement
-            %on one of my MainBoards, but it did not help!
-            
-            %wait until conversion is complete
-            for k=1:10
-                status = this.mbc.queryBytesI2C(this.address, this.offset, 0x01, 1, 2);
-                if bitand(status(1), 0x80) ~= 0
-                    %read result
-                    raw = this.mbc.queryBytesI2C(this.address, this.offset, 0x00, 1, 2);
-                    %convert to voltage, considering gain
-                    v = this.computeVolts(gain, raw);
-                    break
-                else
-                    fprintf("Waiting\n");
+            bytes = [uint8(0x01) uint8(bitshift(config, -8)) uint8(bitand(config, 0b0000000011111111))];
+
+            for i=1:1:this.nRepeat
+                try
+                    this.mbc.writeBytesI2C(this.address, this.offset, bytes);
+        
+                    %check if config arrived corrcetly at ADS1115
+                    status = this.mbc.queryBytesI2C(this.address, this.offset, 0x01, 1, 2);
+                    if ~isequalmask(status, [bytes(2) bytes(3)], [0b11111111 0b11111110])
+                        fprintf('Problem1 in ADC: Incorrect config register\n');
+                        this.mbc.CBerror('029');
+                    end
+                    %wait until conversion is complete
+                    pause(0.1);
+                    %read conversion result
+                    raw1 = this.mbc.queryBytesI2C(this.address, this.offset, 0x00, 1, 2);
+                    %Check if there was really a reading or if the last
+                    %conversion result was returned
+                    if(isequal(raw1, this.lastReadRaw))
+                        fprintf('Problem2 in ADC: No conversion happened\n');
+                        this.mbc.CBerror('029');
+                    end
+                    %read a second time to check if we read correct values
+                    raw2 = this.mbc.queryBytesI2C(this.address, this.offset, 0x00, 1, 2);
+                    if(~isequal(raw1, raw2))
+                        fprintf('Problem3 in ADC: Wrong values read\n');
+                        this.mbc.CBerror('029');
+                    else
+                        this.lastReadRaw = raw1;
+                        %convert to voltage, considering gain
+                        v = this.computeVolts(gain, raw1);
+                        return
+                    end
+                catch e
+                    if this.debug
+                        this.mbc.statusFile.addMsg(msgLevel.WARNING, sprintf("Communication problem during ADC measurement"));
+                    end
+                    if i==this.nRepeat
+                        rethrow(e);
+                    end
                 end
             end
-
         end
+
         function v = computeVolts(this, gain, raw)
             switch (gain)
                 case ADS1115.GAIN_TWOTHIRDS_6_144

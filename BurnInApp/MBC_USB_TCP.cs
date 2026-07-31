@@ -332,6 +332,111 @@ namespace BurnInApp
             return true;
         }
 
+        // Write bytes to I2C device and verify the written value by reading it back twice,
+        // checking read stability and comparing the result against the expected bytes (masked)
+        public bool WriteBytesI2CCheck(int addr, int offset, byte[] bytes, byte[] mask)
+        {
+            var (i2cAddr, doWrite) = AdaptAddr(addr, offset);
+            if (!doWrite)
+            {
+                return false;
+            }
+
+            SwitchI2C(0);
+
+            StringBuilder str = new StringBuilder();
+            foreach (byte b in bytes)
+            {
+                str.Append(b.ToString("X2"));
+            }
+
+            string msg = $"IW_{i2cAddr:X2}{bytes.Length:X3}{str}";
+
+            for (int i = 0; i < NumRepeat; i++)
+            {
+                try
+                {
+                    string resp = WriteMessage(msg, offset);
+
+                    if (!string.IsNullOrEmpty(resp))
+                    {
+                        HandleError(resp);
+                    }
+
+                    // check read stability
+                    byte[] read1 = ReadBytesI2C(addr, offset, bytes.Length);
+                    byte[] read2 = ReadBytesI2C(addr, offset, bytes.Length);
+                    if (!read1.SequenceEqual(read2))
+                    {
+                        Debug_WriteLine("Problem1 in checking returned bytes");
+                        HandleError("029");
+                    }
+
+                    // check returned value
+                    if (IsEqualMask(read2, bytes, mask))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        Debug_WriteLine("Problem2 in checking returned bytes");
+                        HandleError("029");
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (Debug)
+                    {
+                        string strAddr = offset == 0 ? $"0x{addr:X}" : $"0x{addr:X}, offset = {offset}";
+                        StatusFile?.AddMsg(MsgLevel.WARNING,
+                            $"{i + 1}. {StrMode} communication problem in WriteBytesI2CCheck: {e.Message}\naddr = {strAddr}, msg = {msg}\n");
+                    }
+
+                    if (Mode == MBCModeEnum.I2C && i > NumRepeat / 2)
+                    {
+                        if (Debug)
+                        {
+                            StatusFile?.AddMsg(MsgLevel.WARNING, "\n--> Resetting I2C Bus.\n");
+                        }
+                        ResetI2C();
+                    }
+
+                    if (i == NumRepeat - 1)
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // Converted from MATLAB isequalmask(): returns true if all bits selected by mask are
+        // equal in a and b. a, b and mask must have the same length.
+        internal static bool IsEqualMask(byte[] a, byte[] b, byte[] mask)
+        {
+            if (a.Length != b.Length || a.Length != mask.Length)
+            {
+                throw new ArgumentException("a, b, and mask must have the same size.");
+            }
+
+            for (int index = 0; index < a.Length; index++)
+            {
+                int diffMasked = (a[index] ^ b[index]) & mask[index];
+                if (diffMasked != 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static void Debug_WriteLine(string message)
+        {
+            System.Diagnostics.Debug.WriteLine(message);
+        }
+
         // Query bytes from I2C device
         public byte[] QueryBytesI2C(int addr, int offset, uint cmd, int nCmd, int nRead)
         {
@@ -721,7 +826,7 @@ namespace BurnInApp
         // Helper methods
         // Converted from MATLAB CBerror(): looks up the error message for the given code
         // and throws an exception with the same format as the original MATLAB error().
-        protected void HandleError(string resp)
+        public void HandleError(string resp)
         {
             if (!string.IsNullOrEmpty(resp))
             {
