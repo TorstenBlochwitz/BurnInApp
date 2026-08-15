@@ -46,7 +46,16 @@
 						</DataTemplate>
 					</DataGridTemplateColumn.CellTemplate>
 				</DataGridTemplateColumn>
-				<DataGridTextColumn Header="Profile" Width="160" Binding="{ReflectionBinding Profile}" />
+				<DataGridTemplateColumn Header="Profile" Width="160">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<Button Content="{Binding Profile}"
+									HorizontalContentAlignment="Left"
+									Tag="{Binding BoardIndex}"
+									Click="ViewProfile_Click" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
 				<DataGridTemplateColumn Header="Serial Number" Width="145">
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
@@ -60,7 +69,15 @@
 				<DataGridTextColumn Header="Start Time" Width="145" Binding="{ReflectionBinding StartTime}" />
 				<DataGridTextColumn Header="End Time" Width="145" Binding="{ReflectionBinding EndTime}" />
 				<DataGridTextColumn Header="Action" Width="130" Binding="{ReflectionBinding Action}" />
-				<DataGridTextColumn Header="Status" Width="*" Binding="{ReflectionBinding Status}" />
+				<DataGridTemplateColumn Header="Status" Width="*">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<Border Background="{Binding StatusBackground}">
+								<TextBlock Text="{Binding Status}" VerticalAlignment="Center" Margin="5,0" />
+							</Border>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
 				<DataGridTextColumn Header="VDC1" Width="75" Binding="{ReflectionBinding VDC1}" />
 				<DataGridTextColumn Header="VDC2" Width="75" Binding="{ReflectionBinding VDC2}" />
 				<DataGridTemplateColumn Header="" Width="75">

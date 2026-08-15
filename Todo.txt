@@ -4,3 +4,13 @@
 - Done: Check if MBC error messages are somewhere and update them
 - Add decodeSic450_STATUS_WORD to PMBusDev
 - Done: BurnInDevice: Add and use trimmedMean!
+
+Tests:
+- connect to USB MBC: OK:works after after start and after clicking the button
+  - TODO: What happens if more than one seriaöl device is connected?
+- Disconnect MBC when no hardware is connected: OK: Goes in Error Mode, stepping stopps. Connect MBC button is enabled
+- Load Profile: Seems to work, Error handling not checked
+- Profile viewer:
+ - TODO: Placement is bad: too small, not resizeable
+ - TODO: Check duration
+
