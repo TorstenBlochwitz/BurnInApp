@@ -287,6 +287,20 @@ namespace BurnInApp
 
         public string GetCompleteFileName() => CompleteFileName;
 
+        public bool IsProfileLoaded()
+        {
+            return !string.IsNullOrEmpty(FileName);
+        }
+
+        public int GetMaxNofEmitters()
+        {
+            if (!IsProfileLoaded())
+            {
+                return 0;
+            }
+            return (int)(NumberOfChannels[0] + NumberOfChannels[1]);
+        }
+
         public string GetCurrProfileName()
         {
             if (CurrProfileStep < 1)

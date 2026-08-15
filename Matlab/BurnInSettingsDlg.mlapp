@@ -1,87 +1,21 @@
-classdef BurnInSettingsDlg < matlab.apps.AppBase
+classdef SerialNumberDlg < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                        matlab.ui.Figure
-        TabGroup                        matlab.ui.container.TabGroup
-        GeneralTab                      matlab.ui.container.Tab
-        NumberofMeasurementsforMeanValuesEditField  matlab.ui.control.NumericEditField
-        NumberofMeasurementsforMeanValuesEditFieldLabel  matlab.ui.control.Label
-        FolderBurnInProfiles            matlab.ui.control.EditField
-        FolderforMeasurementFilesLabel_3  matlab.ui.control.Label
-        BrightnessofStatusLEDsSlider    matlab.ui.control.Slider
-        BrightnessofStatusLEDsLabel     matlab.ui.control.Label
-        BrightnessofPositionLEDsSlider  matlab.ui.control.Slider
-        BrightnessofPositionLEDsLabel   matlab.ui.control.Label
-        SettingsFile                    matlab.ui.control.EditField
-        FolderforSettingsFileLabel      matlab.ui.control.Label
-        FolderStatus                    matlab.ui.control.EditField
-        FolderforMeasurementFilesLabel_2  matlab.ui.control.Label
-        FolderMeasurement               matlab.ui.control.EditField
-        FolderforMeasurementFilesLabel  matlab.ui.control.Label
-        minLabel_2                      matlab.ui.control.Label
-        autoTableSwitchOffTime          matlab.ui.control.NumericEditField
-        autoTableSwitchOffCheckBox      matlab.ui.control.CheckBox
-        SetFolderBurnInProfiles         matlab.ui.control.Button
-        SetSettingsFile                 matlab.ui.control.Button
-        minLabel                        matlab.ui.control.Label
-        StoreSelftestResultafterAfterEvery  matlab.ui.control.NumericEditField
-        StoreSelftestResultAfterEveryCheckBox  matlab.ui.control.CheckBox
-        SetFolderStatus                 matlab.ui.control.Button
-        SetFolderMeasurement            matlab.ui.control.Button
-        CommunicationTab                matlab.ui.container.Tab
-        ChangesMsg                      matlab.ui.control.Label
-        ConnectMBCviaButtonGroup        matlab.ui.container.ButtonGroup
-        EthernetButton                  matlab.ui.control.RadioButton
-        USBButton                       matlab.ui.control.RadioButton
-        IPAddress                       matlab.ui.control.Table
-        CancelButton                    matlab.ui.control.Button
-        OKButton                        matlab.ui.control.Button
+        UIFigure           matlab.ui.Figure
+        Label              matlab.ui.control.Label
+        AA0001ZZ9999Label  matlab.ui.control.Label
+        CancelButton       matlab.ui.control.Button
+        OKButton           matlab.ui.control.Button
+        Number             matlab.ui.control.NumericEditField
+        LastPositionLabel  matlab.ui.control.Label
+        SerialNumber       matlab.ui.control.EditField
+        SerialNumberLabel  matlab.ui.control.Label
     end
 
     
     properties (Access = private)
         main
-        tmpIPAddress = ["","","","","","","",""]; %buffer for IP Address in case of Cancel
-    end
-    
-    methods (Access = private)
-        
-        function updateVisibility(app)
-            if app.StoreSelftestResultAfterEveryCheckBox.Value == 1
-                app.StoreSelftestResultafterAfterEvery.Enable = "on";
-            else
-                app.StoreSelftestResultafterAfterEvery.Enable = "off";
-            end
-            if app.autoTableSwitchOffCheckBox.Value == 1
-                app.autoTableSwitchOffTime.Enable = "on";
-            else
-                app.autoTableSwitchOffTime.Enable = "off";
-            end
-            if app.main.burnInController.isAProfileRunning() == true
-                app.ChangesMsg.Text = 'No changes are allowed, because at least one BurnIn profile is running!';
-                app.IPAddress.Enable = "off";
-                app.ConnectMBCviaButtonGroup.Enable = "off";
-            else
-                app.ChangesMsg.Text = 'Changes will be applied after the next start of the BurnIn App!';
-                if app.ConnectMBCviaButtonGroup.SelectedObject == app.USBButton
-                    app.IPAddress.Enable = "off";
-                else
-                    app.IPAddress.Enable = "on";
-                end
-                app.ConnectMBCviaButtonGroup.Enable = "on";
-            end
-        end
-        %removing styles avoids increasing runtime of updateVisibility()
-        function removeCellStyles(app)
-            styles = app.IPAddress.StyleConfigurations;
-            %going backwards ensures that size is not exceeded
-            for k=size(styles, 1):-1:1
-                if styles{k,1} == categorical(cellstr('cell'))
-                    app.IPAddress.removeStyle(k);
-                end
-            end
-        end
     end
     
 
@@ -91,205 +25,36 @@ classdef BurnInSettingsDlg < matlab.apps.AppBase
         % Code that executes after component creation
         function Initialize(app, burnInApp)
             app.main = burnInApp;
-            
-            app.main.burnInController.settings.comSettingsHaveChanged = false;
+            app.UIFigure.Name = 'Serial Number';
+            app.SerialNumber.Value = app.main.burnInController.serialNumber(app.main.currBoard);
+            app.Label.Text = sprintf("1 ... %d", app.main.burnInController.GetMaxNofEmitters(app.main.currBoard));
+            app.Number.Limits = [1, app.main.burnInController.GetMaxNofEmitters(app.main.currBoard)];
+            app.Number.Value = min(app.main.burnInController.numberOfEmitters(app.main.currBoard), app.main.burnInController.GetMaxNofEmitters(app.main.currBoard));
+            focus(app.SerialNumber);
+        end
 
-            app.FolderMeasurement.Value = app.main.burnInController.settings.folder;
-            app.FolderStatus.Value = app.main.burnInController.settings.folderStatus;
-            app.FolderBurnInProfiles.Value = app.main.burnInController.settings.folderBurnInProfiles;
-            app.StoreSelftestResultafterAfterEvery.Value = app.main.burnInController.settings.storeSelfTestResultPeriod;
-            app.StoreSelftestResultAfterEveryCheckBox.Value = app.main.burnInController.settings.storeSelfTestResult;
-            app.NumberofMeasurementsforMeanValuesEditField.Value = app.main.burnInController.settings.numberOfMeasurementsForMeanValues;
-            app.SettingsFile.Value = app.main.burnInController.settings.fileName;
-            app.BrightnessofStatusLEDsSlider.Value = app.main.burnInController.settings.brightnessStatusLEDs;
-            app.BrightnessofPositionLEDsSlider.Value = app.main.burnInController.settings.brightnessPosLEDs;
-            app.autoTableSwitchOffCheckBox.Value = app.main.burnInController.settings.autoTableSwitchOff;
-            app.autoTableSwitchOffTime.Value = app.main.burnInController.settings.autoTableSwitchOffTime;
-
-            if ispc
-                app.SettingsFile.Enable = "on";
-                app.SetSettingsFile.Enable = "on";
+        % Button pushed function: OKButton
+        function OKButtonPushed(app, event)
+            if ~isempty(app.SerialNumber.Value)
+                [b, SNr] = getSNr(app.SerialNumber.Value, 0);
+                if b
+                    app.main.burnInController.serialNumber(app.main.currBoard) = SNr;
+                    app.main.burnInController.numberOfEmitters(app.main.currBoard) = app.Number.Value;
+                    [~, SNrend] = getSNr(SNr, app.Number.Value);
+                    app.main.Status.Data{app.main.currBoard,2} = sprintf('%s - %s', SNr, SNrend);
+                    delete(app);
+                else
+                    uialert(app.UIFigure, sprintf("'%s* is not a valid Serialnumber.\n\nEnter a valid Serialnumber for example 'AA0001'", app.SerialNumber.Value), "Error in Serialnumber");
+                end
             else
-                app.SettingsFile.Enable = "off";
-                app.SetSettingsFile.Enable = "off";
+                app.main.burnInController.serialNumber(app.main.currBoard) = "";
+                delete(app);
             end
-
-            %Communication
-            if app.main.burnInController.settings.MBCmode == MBCModeEnum.I2C
-                app.ConnectMBCviaButtonGroup.SelectedObject = app.USBButton;
-            else
-                app.ConnectMBCviaButtonGroup.SelectedObject = app.EthernetButton;
-            end
-            app.IPAddress.RowName = {'1'; '2'; '3'; '4';'5';'6';'7';'8'};
-            sWhite = uistyle('BackgroundColor','white');
-            for k=1:1:size(app.main.burnInController.settings.IPAddress, 2)
-                addStyle(app.IPAddress, sWhite, 'row', k);
-                app.tmpIPAddress(k) = sprintf("%s", app.main.burnInController.settings.IPAddress(k));
-                app.IPAddress.Data{k,1} = convertStringsToChars(app.main.burnInController.settings.IPAddress(k));
-            end
-            app.updateVisibility();
-        end
-
-        % Button pushed function: SetFolderMeasurement
-        function SetFolderMeasurementButtonPushed(app, event)
-            folder = uigetdir(app.FolderMeasurement.Value);
-            if ~(isequal(folder,0))
-                app.FolderMeasurement.Value = folder;
-            end
-        end
-
-        % Button pushed function: SetFolderStatus
-        function SetFolderStatusButtonPushed(app, event)
-            folder = uigetdir(app.FolderStatus.Value);
-            if ~(isequal(folder,0))
-                app.FolderStatus.Value = folder;
-            end            
-        end
-
-        % Close request function: UIFigure
-        function UIFigureCloseRequest(app, event)
-            delete(app);
         end
 
         % Button pushed function: CancelButton
         function CancelButtonPushed(app, event)
             delete(app);
-        end
-
-        % Button pushed function: OKButton
-        function OKButtonPushed(app, event)
-            %Communication
-            app.removeCellStyles();
-            if app.ConnectMBCviaButtonGroup.SelectedObject == app.EthernetButton
-                sRed = uistyle('BackgroundColor','red');
-                sWhite = uistyle('BackgroundColor','white');
-                for k=1:1:size(app.tmpIPAddress, 2)
-                    addStyle(app.IPAddress, sWhite, 'row', k);
-                end
-                %check if entered IP addresses are unique
-                bFound = false;
-                for k=1:1:size(app.tmpIPAddress, 2)
-                    %fprintf("Looking for: %s\n", app.tmpIPAddress(k));
-                    for n=k+1:1:size(app.tmpIPAddress, 2)
-                        if (app.tmpIPAddress(k) ~= "") && (app.tmpIPAddress(k) == app.tmpIPAddress(n))
-                            %fprintf("Found: %s\n", app.tmpIPAddress(k));
-                            if bFound == false
-                                app.TabGroup.SelectedTab = app.CommunicationTab;
-                                app.IPAddress.Selection = [k, 1];
-                                uialert(app.UIFigure, sprintf("The IP address '%s' was entered more than once!\n\nEnter unique IP addresses!", app.tmpIPAddress(n)), "IP Adresses not unique");
-                            end
-                            addStyle(app.IPAddress, sRed, 'row', n);
-                            bFound = true;
-                        end
-                    end
-                    if bFound == true
-                        return
-                    end
-                end
-                %take the data
-                for k=1:1:size(app.tmpIPAddress, 2)
-                    %remember if anything has changed and reconnect in BurnInController!
-                    if app.main.burnInController.settings.IPAddress(k) ~= app.tmpIPAddress(k)
-                        app.main.burnInController.settings.comSettingsHaveChanged = true;
-                    end
-                    app.main.burnInController.settings.IPAddress(k) = app.tmpIPAddress(k);
-                end
-            end
-
-            if app.ConnectMBCviaButtonGroup.SelectedObject == app.USBButton
-                if app.main.burnInController.settings.MBCmode ~= MBCModeEnum.I2C
-                    app.main.burnInController.settings.comSettingsHaveChanged = true;
-                end
-                app.main.burnInController.settings.MBCmode = MBCModeEnum.I2C;     
-            else
-                if app.main.burnInController.settings.MBCmode ~= MBCModeEnum.TCP
-                    app.main.burnInController.settings.comSettingsHaveChanged = true;
-                end
-                app.main.burnInController.settings.MBCmode = MBCModeEnum.TCP;
-            end
-            
-            app.main.burnInController.settings.folder = app.FolderMeasurement.Value;
-            app.main.burnInController.settings.folderStatus = app.FolderStatus.Value;
-            app.main.burnInController.settings.folderBurnInProfiles = app.FolderBurnInProfiles.Value;
-            app.main.burnInController.settings.fileName = app.SettingsFile.Value;
-            app.main.burnInController.settings.storeSelfTestResultPeriod = app.StoreSelftestResultafterAfterEvery.Value;
-            app.main.burnInController.settings.numberOfMeasurementsForMeanValues = app.NumberofMeasurementsforMeanValuesEditField.Value;
-            app.main.burnInController.settings.brightnessStatusLEDs = app.BrightnessofStatusLEDsSlider.Value;
-            app.main.burnInController.settings.brightnessPosLEDs = app.BrightnessofPositionLEDsSlider.Value;
-            app.main.burnInController.applyRGBLEDbrightness();
-            app.main.burnInController.settings.autoTableSwitchOff = app.autoTableSwitchOffCheckBox.Value;
-            app.main.burnInController.settings.autoTableSwitchOffTime = app.autoTableSwitchOffTime.Value;
-
-            %Try to save settings to file
-            if app.main.burnInController.settings.saveToFile(app.SettingsFile.Value) > 0
-                if ispc
-                    setRegistryValue('HKEY_CURRENT_USER', 'BurnInApp', 'BurnInSettings',app.SettingsFile.Value);
-                end
-                delete(app);
-            else
-                uiwait(msgbox(sprintf("Settings could not be stored in file: %s.\n\nPlease select a valid filename and a folder you have write access!", app.SettingsFile.Value), "Error","error"));
-                focus(app.SettingsFile);
-            end
-        end
-
-        % Value changed function: StoreSelftestResultAfterEveryCheckBox
-        function StoreSelftestResultAfterEveryCheckBoxValueChanged(app, event)
-            %app.main.burnInController.settings.storeSelfTestResult = app.StoreSelftestResultAfterEveryCheckBox.Value == 1;
-            app.updateVisibility();
-        end
-
-        % Button pushed function: SetSettingsFile
-        function SetSettingsFileButtonPushed(app, event)
-            strFile = app.SettingsFile.Value;
-            if strlength(strFile) == 0
-                strFile = '*.mat'; 
-            end
-            [file,path] = uiputfile(strFile);
-            if ~(isequal(file,0) || isequal(path,0))
-                app.SettingsFile.Value = fullfile(path,file);
-                %Try to save settings to file
-                if app.main.burnInController.settings.saveToFile(fullfile(path,file)) > 0
-                    setRegistryValue('HKEY_CURRENT_USER', 'BurnInApp', 'BurnInSettings', fullfile(path,file));
-                else
-                    uiwait(msgbox(sprintf("Settings could not be stored in file: %s.\n\nPlease select a valid filename and a folder you have write access!", fullfile(path,file)), "Error","error"));
-                    focus(app.SettingsFile);
-                end
-            end
-        end
-
-        % Button pushed function: SetFolderBurnInProfiles
-        function SetFolderBurnInProfilesButtonPushed(app, event)
-            folder = uigetdir(app.FolderBurnInProfiles.Value);
-            if ~(isequal(folder,0))
-                app.FolderBurnInProfiles.Value = folder;
-            end    
-        end
-
-        % Value changed function: autoTableSwitchOffCheckBox
-        function autoTableSwitchOffCheckBoxValueChanged(app, event)
-            %app.main.burnInController.settings.autoTableSwitchOff = app.autoTableSwitchOffCheckBox.Value == 1;
-            app.updateVisibility();
-        end
-
-        % Cell edit callback: IPAddress
-        function IPAddressCellEdit(app, event)
-            indices = event.Indices;
-            newData = event.NewData;
-            %if (checkIPAddress(event.NewData) || event.NewData == "")
-                app.tmpIPAddress(indices(1)) = event.NewData;
-            % else
-            %     app.IPAddress.Data{indices(1),1} = event.PreviousData;
-            %     uialert(app.UIFigure, sprintf("'%s' is not a valid IP address.\n\nEnter a valid IP address, for example '192.168.2.30'", newData), "Error in IP Adress");
-            %     %uiwait(errordlg(sprintf("'%s* is not a valid IP address.\n\nEnter a valid IP address, for example '192.168.2.30'", newData), "Error in IP Adress"));
-            %     %app.IPAddress.Data{indices(1),1} = app.tmpIPAddress(indices(1));
-            %     %drawnow();
-            %     %figure(app.UIFigure);
-            % end
-        end
-
-        % Selection changed function: ConnectMBCviaButtonGroup
-        function ConnectMBCviaButtonGroupSelectionChanged(app, event)
-            app.updateVisibility();
         end
     end
 
@@ -301,199 +66,60 @@ classdef BurnInSettingsDlg < matlab.apps.AppBase
 
             % Create UIFigure and hide until all components are created
             app.UIFigure = uifigure('Visible', 'off');
-            app.UIFigure.Position = [100 100 599 450];
+            app.UIFigure.AutoResizeChildren = 'off';
+            app.UIFigure.Position = [100 100 344 179];
             app.UIFigure.Name = 'MATLAB App';
             app.UIFigure.Resize = 'off';
-            app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @UIFigureCloseRequest, true);
+            app.UIFigure.BusyAction = 'cancel';
+            app.UIFigure.Interruptible = 'off';
             app.UIFigure.WindowStyle = 'modal';
+
+            % Create SerialNumberLabel
+            app.SerialNumberLabel = uilabel(app.UIFigure);
+            app.SerialNumberLabel.HorizontalAlignment = 'right';
+            app.SerialNumberLabel.Position = [12 141 85 22];
+            app.SerialNumberLabel.Text = 'Serial Number:';
+
+            % Create SerialNumber
+            app.SerialNumber = uieditfield(app.UIFigure, 'text');
+            app.SerialNumber.CharacterLimits = [6 6];
+            app.SerialNumber.Position = [104 141 91 22];
+
+            % Create LastPositionLabel
+            app.LastPositionLabel = uilabel(app.UIFigure);
+            app.LastPositionLabel.HorizontalAlignment = 'right';
+            app.LastPositionLabel.Position = [12 111 77 22];
+            app.LastPositionLabel.Text = 'Last Position:';
+
+            % Create Number
+            app.Number = uieditfield(app.UIFigure, 'numeric');
+            app.Number.Limits = [1 120];
+            app.Number.AllowEmpty = 'on';
+            app.Number.HorizontalAlignment = 'left';
+            app.Number.Position = [104 111 91 22];
+            app.Number.Value = [];
 
             % Create OKButton
             app.OKButton = uibutton(app.UIFigure, 'push');
             app.OKButton.ButtonPushedFcn = createCallbackFcn(app, @OKButtonPushed, true);
-            app.OKButton.Position = [385 16 90 23];
+            app.OKButton.Position = [136 15 91 23];
             app.OKButton.Text = 'OK';
 
             % Create CancelButton
             app.CancelButton = uibutton(app.UIFigure, 'push');
             app.CancelButton.ButtonPushedFcn = createCallbackFcn(app, @CancelButtonPushed, true);
-            app.CancelButton.Position = [492 16 90 23];
+            app.CancelButton.Position = [240 15 91 23];
             app.CancelButton.Text = 'Cancel';
 
-            % Create TabGroup
-            app.TabGroup = uitabgroup(app.UIFigure);
-            app.TabGroup.Position = [19 56 564 380];
+            % Create AA0001ZZ9999Label
+            app.AA0001ZZ9999Label = uilabel(app.UIFigure);
+            app.AA0001ZZ9999Label.Position = [201 141 106 22];
+            app.AA0001ZZ9999Label.Text = 'AA0001 ... ZZ9999';
 
-            % Create GeneralTab
-            app.GeneralTab = uitab(app.TabGroup);
-            app.GeneralTab.Title = 'General';
-
-            % Create SetFolderMeasurement
-            app.SetFolderMeasurement = uibutton(app.GeneralTab, 'push');
-            app.SetFolderMeasurement.ButtonPushedFcn = createCallbackFcn(app, @SetFolderMeasurementButtonPushed, true);
-            app.SetFolderMeasurement.Position = [505 257 43 23];
-            app.SetFolderMeasurement.Text = 'Set...';
-
-            % Create SetFolderStatus
-            app.SetFolderStatus = uibutton(app.GeneralTab, 'push');
-            app.SetFolderStatus.ButtonPushedFcn = createCallbackFcn(app, @SetFolderStatusButtonPushed, true);
-            app.SetFolderStatus.Position = [505 224 43 23];
-            app.SetFolderStatus.Text = 'Set...';
-
-            % Create StoreSelftestResultAfterEveryCheckBox
-            app.StoreSelftestResultAfterEveryCheckBox = uicheckbox(app.GeneralTab);
-            app.StoreSelftestResultAfterEveryCheckBox.ValueChangedFcn = createCallbackFcn(app, @StoreSelftestResultAfterEveryCheckBoxValueChanged, true);
-            app.StoreSelftestResultAfterEveryCheckBox.Text = 'Store Self-test Result after every:';
-            app.StoreSelftestResultAfterEveryCheckBox.Position = [18 192 200 22];
-
-            % Create StoreSelftestResultafterAfterEvery
-            app.StoreSelftestResultafterAfterEvery = uieditfield(app.GeneralTab, 'numeric');
-            app.StoreSelftestResultafterAfterEvery.Limits = [0 Inf];
-            app.StoreSelftestResultafterAfterEvery.ValueDisplayFormat = '%.0f';
-            app.StoreSelftestResultafterAfterEvery.Position = [222 192 271 22];
-
-            % Create minLabel
-            app.minLabel = uilabel(app.GeneralTab);
-            app.minLabel.Position = [505 192 25 22];
-            app.minLabel.Text = 'min';
-
-            % Create SetSettingsFile
-            app.SetSettingsFile = uibutton(app.GeneralTab, 'push');
-            app.SetSettingsFile.ButtonPushedFcn = createCallbackFcn(app, @SetSettingsFileButtonPushed, true);
-            app.SetSettingsFile.Position = [506 327 43 23];
-            app.SetSettingsFile.Text = 'Set...';
-
-            % Create SetFolderBurnInProfiles
-            app.SetFolderBurnInProfiles = uibutton(app.GeneralTab, 'push');
-            app.SetFolderBurnInProfiles.ButtonPushedFcn = createCallbackFcn(app, @SetFolderBurnInProfilesButtonPushed, true);
-            app.SetFolderBurnInProfiles.Position = [505 293 43 23];
-            app.SetFolderBurnInProfiles.Text = 'Set...';
-
-            % Create autoTableSwitchOffCheckBox
-            app.autoTableSwitchOffCheckBox = uicheckbox(app.GeneralTab);
-            app.autoTableSwitchOffCheckBox.ValueChangedFcn = createCallbackFcn(app, @autoTableSwitchOffCheckBoxValueChanged, true);
-            app.autoTableSwitchOffCheckBox.Text = 'Switch off Status Table after:';
-            app.autoTableSwitchOffCheckBox.Position = [18 119 174 22];
-
-            % Create autoTableSwitchOffTime
-            app.autoTableSwitchOffTime = uieditfield(app.GeneralTab, 'numeric');
-            app.autoTableSwitchOffTime.Limits = [0 Inf];
-            app.autoTableSwitchOffTime.ValueDisplayFormat = '%.0f';
-            app.autoTableSwitchOffTime.Position = [222 119 271 22];
-
-            % Create minLabel_2
-            app.minLabel_2 = uilabel(app.GeneralTab);
-            app.minLabel_2.Position = [505 119 25 22];
-            app.minLabel_2.Text = 'min';
-
-            % Create FolderforMeasurementFilesLabel
-            app.FolderforMeasurementFilesLabel = uilabel(app.GeneralTab);
-            app.FolderforMeasurementFilesLabel.HorizontalAlignment = 'right';
-            app.FolderforMeasurementFilesLabel.Position = [14 257 165 22];
-            app.FolderforMeasurementFilesLabel.Text = 'Folder for Measurement Files:';
-
-            % Create FolderMeasurement
-            app.FolderMeasurement = uieditfield(app.GeneralTab, 'text');
-            app.FolderMeasurement.Editable = 'off';
-            app.FolderMeasurement.Position = [222 257 271 22];
-
-            % Create FolderforMeasurementFilesLabel_2
-            app.FolderforMeasurementFilesLabel_2 = uilabel(app.GeneralTab);
-            app.FolderforMeasurementFilesLabel_2.HorizontalAlignment = 'right';
-            app.FolderforMeasurementFilesLabel_2.Position = [14 224 126 22];
-            app.FolderforMeasurementFilesLabel_2.Text = 'Folder for Status Files:';
-
-            % Create FolderStatus
-            app.FolderStatus = uieditfield(app.GeneralTab, 'text');
-            app.FolderStatus.Editable = 'off';
-            app.FolderStatus.Position = [222 224 271 22];
-
-            % Create FolderforSettingsFileLabel
-            app.FolderforSettingsFileLabel = uilabel(app.GeneralTab);
-            app.FolderforSettingsFileLabel.Position = [18 327 135 22];
-            app.FolderforSettingsFileLabel.Text = 'Settings File:';
-
-            % Create SettingsFile
-            app.SettingsFile = uieditfield(app.GeneralTab, 'text');
-            app.SettingsFile.Position = [222 327 272 22];
-
-            % Create BrightnessofPositionLEDsLabel
-            app.BrightnessofPositionLEDsLabel = uilabel(app.GeneralTab);
-            app.BrightnessofPositionLEDsLabel.Position = [18 81 157 22];
-            app.BrightnessofPositionLEDsLabel.Text = 'Brightness of Position LEDs:';
-
-            % Create BrightnessofPositionLEDsSlider
-            app.BrightnessofPositionLEDsSlider = uislider(app.GeneralTab);
-            app.BrightnessofPositionLEDsSlider.MajorTicks = [0 10 20 30 40 50 60 70 80 90 100];
-            app.BrightnessofPositionLEDsSlider.MinorTicks = [0 5 15 25 35 45 55 65 75 85 95];
-            app.BrightnessofPositionLEDsSlider.Position = [228 100 309 3];
-
-            % Create BrightnessofStatusLEDsLabel
-            app.BrightnessofStatusLEDsLabel = uilabel(app.GeneralTab);
-            app.BrightnessofStatusLEDsLabel.Position = [18 21 148 22];
-            app.BrightnessofStatusLEDsLabel.Text = 'Brightness of Status LEDs:';
-
-            % Create BrightnessofStatusLEDsSlider
-            app.BrightnessofStatusLEDsSlider = uislider(app.GeneralTab);
-            app.BrightnessofStatusLEDsSlider.MajorTicks = [0 10 20 30 40 50 60 70 80 90 100];
-            app.BrightnessofStatusLEDsSlider.MinorTicks = [0 5 15 25 35 45 55 65 75 85 95];
-            app.BrightnessofStatusLEDsSlider.Position = [228 40 309 3];
-
-            % Create FolderforMeasurementFilesLabel_3
-            app.FolderforMeasurementFilesLabel_3 = uilabel(app.GeneralTab);
-            app.FolderforMeasurementFilesLabel_3.Position = [18 293 187 22];
-            app.FolderforMeasurementFilesLabel_3.Text = 'Default Folder for Burn-In Profiles:';
-
-            % Create FolderBurnInProfiles
-            app.FolderBurnInProfiles = uieditfield(app.GeneralTab, 'text');
-            app.FolderBurnInProfiles.Editable = 'off';
-            app.FolderBurnInProfiles.Position = [222 293 271 22];
-
-            % Create NumberofMeasurementsforMeanValuesEditFieldLabel
-            app.NumberofMeasurementsforMeanValuesEditFieldLabel = uilabel(app.GeneralTab);
-            app.NumberofMeasurementsforMeanValuesEditFieldLabel.HorizontalAlignment = 'right';
-            app.NumberofMeasurementsforMeanValuesEditFieldLabel.Position = [14 156 239 22];
-            app.NumberofMeasurementsforMeanValuesEditFieldLabel.Text = 'Number of Measurements for Mean Values:';
-
-            % Create NumberofMeasurementsforMeanValuesEditField
-            app.NumberofMeasurementsforMeanValuesEditField = uieditfield(app.GeneralTab, 'numeric');
-            app.NumberofMeasurementsforMeanValuesEditField.Limits = [1 10];
-            app.NumberofMeasurementsforMeanValuesEditField.Position = [266 153 226 27];
-            app.NumberofMeasurementsforMeanValuesEditField.Value = 1;
-
-            % Create CommunicationTab
-            app.CommunicationTab = uitab(app.TabGroup);
-            app.CommunicationTab.Title = 'Communication';
-
-            % Create IPAddress
-            app.IPAddress = uitable(app.CommunicationTab);
-            app.IPAddress.BackgroundColor = [1 1 0;1 0.4118 0.1608];
-            app.IPAddress.ColumnName = {'IP Address'};
-            app.IPAddress.RowName = {};
-            app.IPAddress.ColumnEditable = true;
-            app.IPAddress.CellEditCallback = createCallbackFcn(app, @IPAddressCellEdit, true);
-            app.IPAddress.Position = [20 9 529 234];
-
-            % Create ConnectMBCviaButtonGroup
-            app.ConnectMBCviaButtonGroup = uibuttongroup(app.CommunicationTab);
-            app.ConnectMBCviaButtonGroup.SelectionChangedFcn = createCallbackFcn(app, @ConnectMBCviaButtonGroupSelectionChanged, true);
-            app.ConnectMBCviaButtonGroup.Title = 'Connect MBC via:';
-            app.ConnectMBCviaButtonGroup.Position = [20 251 529 78];
-
-            % Create USBButton
-            app.USBButton = uiradiobutton(app.ConnectMBCviaButtonGroup);
-            app.USBButton.Text = 'USB';
-            app.USBButton.Position = [11 28 58 22];
-            app.USBButton.Value = true;
-
-            % Create EthernetButton
-            app.EthernetButton = uiradiobutton(app.ConnectMBCviaButtonGroup);
-            app.EthernetButton.Text = 'Ethernet';
-            app.EthernetButton.Position = [11 6 67 22];
-
-            % Create ChangesMsg
-            app.ChangesMsg = uilabel(app.CommunicationTab);
-            app.ChangesMsg.Position = [23 330 394 25];
-            app.ChangesMsg.Text = 'No changes are allowed, because at least one Burn In profile is running!';
+            % Create Label
+            app.Label = uilabel(app.UIFigure);
+            app.Label.Position = [201 111 48 22];
+            app.Label.Text = '1 ... 120';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
@@ -504,7 +130,7 @@ classdef BurnInSettingsDlg < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = BurnInSettingsDlg(varargin)
+        function app = SerialNumberDlg(varargin)
 
             runningApp = getRunningApp(app);
 

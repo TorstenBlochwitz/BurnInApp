@@ -117,6 +117,20 @@ namespace BurnInApp
             return $"{AppName} Version: {Version}";
         }
 
+        /// <summary>
+        /// Get the maximum number of emitters for a specific board, determined by the loaded profile.
+        /// </summary>
+        /// <param name="index">1-based board index (1..8)</param>
+        /// <returns>Maximum number of emitters, or 0 if no profile is loaded</returns>
+        public int GetMaxNofEmitters(int index)
+        {
+            if (index < 1 || index > NumBoards)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index), $"Board index must be between 1 and {NumBoards}");
+            }
+            return BurnInProfiles[index - 1].GetMaxNofEmitters();
+        }
+
         public int ConnectMBC(string mbcAddr)
         {
             int ret = 1;

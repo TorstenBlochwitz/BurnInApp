@@ -157,6 +157,13 @@ classdef BurnInProfile < handle
                 this.MeasurementRate = 0;
             end
         end
+        function b = isProfileLoaded(this)
+            if (isempty(this.fileName) || (strlength(string(this.fileName)) == 0))
+                b = false;
+            else
+                b = true;
+            end
+        end
         function n = getNoSteps(this)
             n= size(this.p, 2);
         end
@@ -183,6 +190,15 @@ classdef BurnInProfile < handle
         end
         function strFile = getCompleteFileName(this)
             strFile = this.completeFileName;
+        end
+        function ret = GetMaxNofEmitters(this)
+            ret = 0;
+            fprintf("File: %s\n", this.fileName);
+            if this.isProfileLoaded()
+                fprintf("n1 = %f, n2 = %f\n", this.NumberOfChannels(1), this.NumberOfChannels(2));
+
+                ret = sum(this.NumberOfChannels);
+            end
         end
         function name = getCurrProfileName(this)
             if this.currProfileStep < 1

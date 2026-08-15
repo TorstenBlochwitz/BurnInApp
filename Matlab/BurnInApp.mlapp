@@ -184,7 +184,8 @@ classdef BurnInApp < matlab.apps.AppBase
                                 addStyle(app.Status,uistyle('BackgroundColor',app.burnInController.getStatusColor(k)),'cell',[k,6]);
                                 
                                 if app.burnInController.serialNumber(k) == ""
-                                    if (app.burnInController.burnInStatus(k).getStatus() > BurnInStatusEnum.DCDC_CONNECTED)
+                                    if (app.burnInController.burnInStatus(k).getStatus() > BurnInStatusEnum.DCDC_CONNECTED) && ...
+                                       (app.burnInController.burnInProfile(k).isProfileLoaded())
                                         app.Status.Data{k,2} = sprintf('...');
                                     else
                                         app.Status.Data{k,2} = sprintf('');
@@ -350,6 +351,10 @@ classdef BurnInApp < matlab.apps.AppBase
                         app.Status.Data{k,1} = '';
                     else
                         app.Status.Data{k,1} = app.burnInController.burnInProfile(k).getFileName();
+                        %reset Serial number and number of emitters
+                        app.burnInController.serialNumber(k) = '';
+                        app.burnInController.numberOfEmitters(k) = 120;
+                        app.Status.Data{k,2} = '';
                     end
                 end
             end
@@ -413,6 +418,7 @@ classdef BurnInApp < matlab.apps.AppBase
                 elseif displayColumn == 2
                     status = app.burnInController.burnInProfile(displayRow).getStatus();
                     if  (app.burnInController.burnInStatus(displayRow).getStatus() > BurnInStatusEnum.DCDC_CONNECTED) && ...
+                        (app.burnInController.burnInProfile(displayRow).isProfileLoaded()) && ...
                         (status ~= ProfileStatusEnum.RUNNING) && ...
                         (status ~= ProfileStatusEnum.STOPPED_MANUALLY) && ... 
                         (status ~= ProfileStatusEnum.STOPPED_ERROR)
@@ -524,13 +530,6 @@ classdef BurnInApp < matlab.apps.AppBase
             end
             drawnow();
         end
-
-        % Cell edit callback: Status
-        function Cell(app, event)
-            indices = event.Indices;
-            newData = event.NewData;
-            
-        end
     end
 
     % Component initialization
@@ -551,7 +550,6 @@ classdef BurnInApp < matlab.apps.AppBase
             app.Status.ColumnWidth = {160, 'auto', 'auto', 'auto', 'auto', 'auto', 50, 50};
             app.Status.RowName = {};
             app.Status.ColumnEditable = [false false false false false false false false];
-            app.Status.CellEditCallback = createCallbackFcn(app, @Cell, true);
             app.Status.ClickedFcn = createCallbackFcn(app, @StatusClicked, true);
             app.Status.BusyAction = 'cancel';
             app.Status.Interruptible = 'off';

@@ -1,0 +1,79 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		mc:Ignorable="d" d:DesignWidth="344" d:DesignHeight="179"
+		x:Class="BurnInApp.SerialNumberDialog"
+		Title="Serial Number"
+		Width="344" Height="179"
+		WindowStartupLocation="CenterOwner"
+		CanResize="False">
+
+	<Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="12">
+		<!-- Serial Number -->
+		<Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
+			<Label Grid.Column="0" 
+				   Content="Serial Number:" 
+				   Width="85" 
+				   VerticalAlignment="Center"
+				   HorizontalAlignment="Right"
+				   Margin="0,0,8,0"/>
+			<TextBox Grid.Column="1" 
+					 x:Name="SerialNumberTextBox"
+					 MaxLength="6"
+					 Width="91"
+					 HorizontalAlignment="Left"
+					 VerticalAlignment="Center"/>
+			<Label Grid.Column="2" 
+				   Content="AA0001 ... ZZ9999"
+				   VerticalAlignment="Center"
+				   Margin="6,0,0,0"/>
+		</Grid>
+
+		<!-- Last Position -->
+		<Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
+			<Label Grid.Column="0" 
+				   Content="Last Position:" 
+				   Width="85" 
+				   VerticalAlignment="Center"
+				   HorizontalAlignment="Right"
+				   Margin="0,0,8,0"/>
+			<NumericUpDown Grid.Column="1" 
+						   x:Name="NumberNumericUpDown"
+						   Minimum="1"
+						   Maximum="120"
+						   Increment="1"
+						   Width="91"
+						   HorizontalAlignment="Left"
+						   VerticalAlignment="Center"
+						   FormatString="0"
+						   AllowSpin="True"
+						   ShowButtonSpinner="True"/>
+			<Label Grid.Column="2" 
+				   x:Name="NumberRangeLabel"
+				   Content="1 ... 120"
+				   VerticalAlignment="Center"
+				   Margin="6,0,0,0"/>
+		</Grid>
+
+		<!-- Spacer -->
+		<Border Grid.Row="2" Height="20"/>
+
+		<!-- Buttons -->
+		<StackPanel Grid.Row="3" 
+					Orientation="Horizontal" 
+					HorizontalAlignment="Right"
+					Spacing="8">
+			<Button Content="OK" 
+					Width="91" 
+					Height="23"
+					Click="OKButton_Click"
+					IsDefault="True"/>
+			<Button Content="Cancel" 
+					Width="91" 
+					Height="23"
+					Click="CancelButton_Click"
+					IsCancel="True"/>
+		</StackPanel>
+	</Grid>
+</Window>
