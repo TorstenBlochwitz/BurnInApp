@@ -117,7 +117,8 @@ namespace BurnInApp
                     var ports = FindSerialPorts();
                     if (ports.Length == 0)
                     {
-                        // No port detected
+                        throw new InvalidOperationException(
+                            "No MBC USB serial port was found. Connect the MBC and verify its driver.");
                     }
                     else if (ports.Length == 1)
                     {
