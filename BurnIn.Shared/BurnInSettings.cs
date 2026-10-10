@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Settings for BurnIn
@@ -16,11 +16,11 @@ namespace BurnInApp
         public string DMM6500_ID { get; set; } = "USB0::0x05E6::0x6500::04546108::INSTR";
         public string MBC_Port { get; set; } = "COM";
         public int I2CAddrOffset { get; set; } = 0;
-        public string Folder { get; set; } = "C:\\temp";
+        public string Folder { get; set; } = string.Empty;
         public string Postfix { get; set; } = "Measurement";
         public string FileName { get; set; } = "";
-        public string FolderStatus { get; set; } = "C:\\temp";
-        public string FolderBurnInProfiles { get; set; } = "C:\\temp";
+        public string FolderStatus { get; set; } = string.Empty;
+        public string FolderBurnInProfiles { get; set; } = string.Empty;
         public int NumberOfMeasurementsForMeanValues { get; set; } = 5;
         public bool StoreSelfTestResult { get; set; } = true;
         public int StoreSelfTestResultPeriod { get; set; } = 30; // in minutes
@@ -40,21 +40,7 @@ namespace BurnInApp
         /// <param name="fileName">Path to the settings JSON file</param>
         public BurnInSettings(string fileName)
         {
-            // Set platform-specific default folders
-            if (OperatingSystem.IsWindows())
-            {
-                Folder = "C:\\temp";
-                Postfix = "Measurement";
-                FolderStatus = "C:\\temp";
-                FolderBurnInProfiles = "C:\\temp";
-            }
-            else
-            {
-                Folder = "~/BurnInApp/";
-                Postfix = "Measurement";
-                FolderStatus = "~/BurnInApp/Status/";
-                FolderBurnInProfiles = "~/BurnInApp/Profiles/";
-            }
+            SetDefaultFolders();
 
             FileName = fileName;
             LoadFromFile(fileName);
@@ -65,21 +51,16 @@ namespace BurnInApp
         /// </summary>
         public BurnInSettings()
         {
-            // Set platform-specific default folders
-            if (OperatingSystem.IsWindows())
-            {
-                Folder = "C:\\temp";
-                Postfix = "Measurement";
-                FolderStatus = "C:\\temp";
-                FolderBurnInProfiles = "C:\\temp";
-            }
-            else
-            {
-                Folder = "~/BurnInApp/";
-                Postfix = "Measurement";
-                FolderStatus = "~/BurnInApp/Status/";
-                FolderBurnInProfiles = "~/BurnInApp/Profiles/";
-            }
+            SetDefaultFolders();
+        }
+
+        private void SetDefaultFolders()
+        {
+            string appDataDirectory = BurnInSharedContext.GetDataDirectory();
+            Folder = Path.Combine(appDataDirectory, "Measurements");
+            Postfix = "Measurement";
+            FolderStatus = Path.Combine(appDataDirectory, "Status");
+            FolderBurnInProfiles = Path.Combine(appDataDirectory, "Profiles");
         }
 
         /// <summary>
@@ -214,3 +195,4 @@ namespace BurnInApp
         }
     }
 }
+

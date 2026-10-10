@@ -1,6 +1,6 @@
 using System;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// MBC_TB Construct a MBC_TB object.
@@ -135,3 +135,4 @@ namespace BurnInApp
         }
     }
 }
+

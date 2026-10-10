@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// MainBoard: functions to deal with a BurnIn Main Board.
@@ -381,3 +381,4 @@ namespace BurnInApp
         }
     }
 }
+

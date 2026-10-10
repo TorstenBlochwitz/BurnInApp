@@ -1,4 +1,4 @@
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Status of a board as tracked by the BurnInController.
@@ -14,3 +14,4 @@ namespace BurnInApp
         SWITCHING_OFF = 5
     }
 }
+

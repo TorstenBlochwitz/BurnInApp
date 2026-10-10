@@ -1,6 +1,6 @@
 using System;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// ADS1115 register/configuration constants and gain settings.
@@ -29,3 +29,4 @@ namespace BurnInApp
         CONFIG_MUX_SINGLE_3 = 0x7000  // Single-ended AIN3
     }
 }
+

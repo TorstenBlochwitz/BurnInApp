@@ -1,6 +1,6 @@
 using System;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// I2CMultiplexerPCA9542A: simplifies safe handling of I2C channel switching.
@@ -61,3 +61,4 @@ namespace BurnInApp
         }
     }
 }
+

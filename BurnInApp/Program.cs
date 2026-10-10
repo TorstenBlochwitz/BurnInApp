@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using BurnIn.Shared;
 using System;
 using System.Globalization;
 
@@ -12,6 +13,7 @@ namespace BurnInApp
         [STAThread]
         public static void Main(string[] args)
         {
+            BurnInSharedContext.ApplicationName = "BurnInApp";
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;

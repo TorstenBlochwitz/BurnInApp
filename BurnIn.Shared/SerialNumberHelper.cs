@@ -1,6 +1,6 @@
 using System;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Helper to compute the n-th serial number following a base serial number.
@@ -66,3 +66,4 @@ namespace BurnInApp
         }
     }
 }
+

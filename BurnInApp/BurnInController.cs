@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading;
+using BurnIn.Shared;
 
 namespace BurnInApp
 {
@@ -69,17 +70,9 @@ namespace BurnInApp
 
         public BurnInController()
         {
-            string strSettingsFile;
-            if (OperatingSystem.IsWindows())
-            {
-                strSettingsFile = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "BurnInApp", "BurnInSettings.json");
-            }
-            else
-            {
-                strSettingsFile = "~/.config/BurnInApp/BurnInSettings.json";
-            }
+            string strSettingsFile = Path.Combine(
+                BurnInSharedContext.GetConfigDirectory(),
+                "BurnInSettings.json");
 
             Console.WriteLine($"Settings: {strSettingsFile}");
             Settings = new BurnInSettings(strSettingsFile);

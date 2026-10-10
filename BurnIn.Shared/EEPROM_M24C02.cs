@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// EEPROM_M24C02 for storing a UUID and other data in the BurnIn application.
@@ -101,3 +101,4 @@ namespace BurnInApp
         }
     }
 }
+

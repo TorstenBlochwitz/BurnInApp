@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using BurnIn.Shared;
 using System;
 
 namespace BurnInApp

@@ -1,6 +1,6 @@
 using System;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// TempSensor_TMP1075: support functions for the temperature sensor TMP1075.
@@ -25,3 +25,4 @@ namespace BurnInApp
         }
     }
 }
+

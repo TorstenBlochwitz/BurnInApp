@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// ADC_ADS1115: support functions for the AD converter ADS1115.
@@ -171,3 +171,4 @@ namespace BurnInApp
         }
     }
 }
+

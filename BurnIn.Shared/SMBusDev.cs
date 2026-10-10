@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// SMBusDev: basic support functions to control a SMBus device.
@@ -183,3 +183,4 @@ namespace BurnInApp
         }
     }
 }
+

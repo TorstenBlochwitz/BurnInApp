@@ -1,4 +1,4 @@
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Holds the current status of a board.
@@ -34,3 +34,4 @@ namespace BurnInApp
         }
     }
 }
+

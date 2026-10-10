@@ -1,4 +1,4 @@
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Action a BurnInController performs for a given board.
@@ -14,3 +14,4 @@ namespace BurnInApp
         DO_MEASUREMENT = 5
     }
 }
+

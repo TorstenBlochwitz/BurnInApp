@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Message severity levels used by <see cref="StatusFile"/>.
@@ -119,3 +119,4 @@ namespace BurnInApp
         }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Holds the current and next action of a board's state machine.
@@ -21,3 +21,4 @@ namespace BurnInApp
         }
     }
 }
+

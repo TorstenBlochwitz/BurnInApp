@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// BurnInDev: interface to a BurnIn Device consisting of a DCDCConverterBoard
@@ -595,3 +595,4 @@ namespace BurnInApp
         }
     }
 }
+

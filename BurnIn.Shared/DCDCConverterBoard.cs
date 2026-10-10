@@ -1,6 +1,6 @@
 using System;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// DCDCConverterBoard: functions to deal with a DCDC Converter Version 2.0.
@@ -485,3 +485,4 @@ namespace BurnInApp
         }
     }
 }
+

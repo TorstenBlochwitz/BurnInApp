@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// PMBusDev implements the support of PMBus devices via an MBC. Tested with Vishay SiC450.
@@ -434,3 +434,4 @@ namespace BurnInApp
         }
     }
 }
+

@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// MBC which supports serial and TCP/IP based communication
@@ -69,15 +69,10 @@ namespace BurnInApp
             // Initialize status file
             if (Debug)
             {
-                string folder;
-                if (OperatingSystem.IsWindows())
-                {
-                    folder = @"C:\temp\CommunicationStatus";
-                }
-                else
-                {
-                    folder = "~/BurnInApp/Status/Communication/";
-                }
+                string folder = Path.Combine(
+                    BurnInSharedContext.GetDataDirectory(),
+                    "Status",
+                    "Communication");
 
                 if (!Directory.Exists(folder))
                 {
@@ -1310,3 +1305,4 @@ namespace BurnInApp
         CONNECTED = 1
     }
 }
+

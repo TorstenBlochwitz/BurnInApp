@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using BurnIn.Shared;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// A single step of a burn-in profile
@@ -528,3 +528,4 @@ namespace BurnInApp
         }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Status of one VDC channel of a board (as computed from the current profile step and measurement).
@@ -82,3 +82,4 @@ namespace BurnInApp
         }
     }
 }
+

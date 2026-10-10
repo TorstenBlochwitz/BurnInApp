@@ -1,4 +1,4 @@
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// MainBoardKind: kind of a BurnIn Main Board.
@@ -11,3 +11,4 @@ namespace BurnInApp
         HalfBoard = 2
     }
 }
+

@@ -1,4 +1,4 @@
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Status of a burn-in profile
@@ -21,3 +21,4 @@ namespace BurnInApp
         RESET_REQUESTED = 12
     }
 }
+

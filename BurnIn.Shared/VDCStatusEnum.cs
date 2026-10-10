@@ -1,4 +1,4 @@
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// Status of a VDC (channel voltage) as computed from a burn-in profile step
@@ -16,3 +16,4 @@ namespace BurnInApp
         VDC_NOT_AVAILABLE = 6
     }
 }
+

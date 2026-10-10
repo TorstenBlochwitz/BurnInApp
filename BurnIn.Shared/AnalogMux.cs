@@ -1,6 +1,6 @@
 using System;
 
-namespace BurnInApp
+namespace BurnIn.Shared
 {
     /// <summary>
     /// AnalogMux: simplifies safe handling of the analog multiplexer.
@@ -43,3 +43,4 @@ namespace BurnInApp
         }
     }
 }
+
