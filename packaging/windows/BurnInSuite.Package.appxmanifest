@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  IgnorableNamespaces="uap desktop6">
+  <Identity
+	Name="__PACKAGE_NAME__"
+	Publisher="__PUBLISHER__"
+	Version="__PACKAGE_VERSION__"
+	ProcessorArchitecture="x64" />
+
+  <Properties>
+	<DisplayName>__DISPLAY_NAME__</DisplayName>
+	<PublisherDisplayName>__PUBLISHER_DISPLAY_NAME__</PublisherDisplayName>
+	<Description>__DESCRIPTION__</Description>
+	<Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+	<TargetDeviceFamily
+	  Name="Windows.Desktop"
+	  MinVersion="10.0.19041.0"
+	  MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+	<Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+	<Application Id="BurnInApp" Executable="BurnInApp\BurnInApp.exe" EntryPoint="Windows.FullTrustApplication">
+	  <uap:VisualElements
+		DisplayName="BurnIn App"
+		Description="BurnIn production desktop application"
+		BackgroundColor="transparent"
+		Square44x44Logo="Assets\BurnInApp-Square44x44Logo.png"
+		Square150x150Logo="Assets\BurnInApp-Square150x150Logo.png">
+		<uap:DefaultTile
+		  Wide310x150Logo="Assets\BurnInApp-Wide310x150Logo.png"
+		  Square310x310Logo="Assets\BurnInApp-Square310x310Logo.png" />
+	  </uap:VisualElements>
+	  <Extensions>
+		<desktop6:Extension Category="windows.fullTrustProcess" Executable="BurnInApp\BurnInApp.exe" />
+	  </Extensions>
+	</Application>
+
+	<Application Id="BurnInBoardMaintenanceApp" Executable="BurnInBoardMaintenanceApp\BurnInBoardMaintenanceApp.exe" EntryPoint="Windows.FullTrustApplication">
+	  <uap:VisualElements
+		DisplayName="BurnIn Maintenance App"
+		Description="BurnIn board maintenance desktop application"
+		BackgroundColor="transparent"
+		Square44x44Logo="Assets\BurnInMaintenance-Square44x44Logo.png"
+		Square150x150Logo="Assets\BurnInMaintenance-Square150x150Logo.png">
+		<uap:DefaultTile
+		  Wide310x150Logo="Assets\BurnInMaintenance-Wide310x150Logo.png"
+		  Square310x310Logo="Assets\BurnInMaintenance-Square310x310Logo.png" />
+	  </uap:VisualElements>
+	  <Extensions>
+		<desktop6:Extension Category="windows.fullTrustProcess" Executable="BurnInBoardMaintenanceApp\BurnInBoardMaintenanceApp.exe" />
+	  </Extensions>
+	</Application>
+  </Applications>
+</Package>

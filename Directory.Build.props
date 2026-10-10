@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+	<Configurations>Debug;Release;LinuxDebug;LinuxRelease</Configurations>
+	<Platforms>AnyCPU;x86</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'LinuxDebug|x86' Or '$(Configuration)|$(Platform)' == 'LinuxRelease|x86'">
+	<RuntimeIdentifier>linux-x86</RuntimeIdentifier>
+	<PlatformTarget>x86</PlatformTarget>
+	<UseAppHost>false</UseAppHost>
+	<SelfContained>false</SelfContained>
+  </PropertyGroup>
+</Project>
