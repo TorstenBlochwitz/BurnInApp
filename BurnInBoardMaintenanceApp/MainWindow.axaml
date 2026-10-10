@@ -1,0 +1,165 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:BurnInBoardMaintenanceApp"
+		mc:Ignorable="d"
+		x:Class="BurnInBoardMaintenanceApp.MainWindow"
+		Title="BurnIn Board Maintenance App"
+		Width="1280" Height="820"
+		MinWidth="1100" MinHeight="760"
+		WindowStartupLocation="CenterScreen"
+		Closing="MainWindow_Closing">
+	<Grid RowDefinitions="*,Auto" Margin="12">
+		<ScrollViewer Grid.Row="0">
+			<StackPanel Spacing="10">
+				<GroupBox Header="Connect">
+					<Grid Margin="10" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,240,Auto,Auto,Auto,Auto,Auto,*,Auto,Auto">
+						<TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,10,8" VerticalAlignment="Center" Text="MBC:"/>
+						<TextBox Grid.Row="0" Grid.Column="1" x:Name="MbcAddressTextBox" Margin="0,0,10,8"/>
+						<Button Grid.Row="0" Grid.Column="2" x:Name="ConnectMbcButton" Margin="0,0,8,8" Content="Connect MBC" Click="ConnectMbcButton_Click"/>
+						<Button Grid.Row="0" Grid.Column="3" x:Name="ConnectBoardsButton" Margin="0,0,12,8" Content="Connect Boards" Click="ConnectBoardsButton_Click"/>
+						<TextBlock Grid.Row="0" Grid.Column="4" Margin="0,0,6,8" VerticalAlignment="Center" Text="MBC"/>
+						<Border Grid.Row="0" Grid.Column="5" x:Name="MbcStatusIndicator" Width="18" Height="18" CornerRadius="9" Background="IndianRed" BorderBrush="Gray" BorderThickness="1" Margin="0,0,12,8"/>
+						<TextBlock Grid.Row="0" Grid.Column="6" Margin="0,0,6,8" VerticalAlignment="Center" Text="DC/DC"/>
+						<Border Grid.Row="0" Grid.Column="7" x:Name="DcdcStatusIndicator" Width="18" Height="18" HorizontalAlignment="Left" CornerRadius="9" Background="IndianRed" BorderBrush="Gray" BorderThickness="1" Margin="0,0,12,8"/>
+						<TextBlock Grid.Row="0" Grid.Column="8" Margin="0,0,6,8" VerticalAlignment="Center" Text="Main Board"/>
+						<Border Grid.Row="0" Grid.Column="9" x:Name="MainBoardStatusIndicator" Width="18" Height="18" CornerRadius="9" Background="IndianRed" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,8"/>
+
+						<TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,10,8" VerticalAlignment="Center" Text="I2C Offset:"/>
+						<ComboBox Grid.Row="1" Grid.Column="1" x:Name="I2cOffsetComboBox" Width="80" HorizontalAlignment="Left" Margin="0,0,10,8"/>
+
+						<TextBlock Grid.Row="1" Grid.Column="2" Margin="0,0,10,8" VerticalAlignment="Center" Text="DC/DC UUID:"/>
+						<TextBox Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3" x:Name="DcdcUuidTextBox" Margin="0,0,10,8"/>
+						<Button Grid.Row="1" Grid.Column="6" Margin="0,0,8,8" Content="Get" Click="GetDcdcUuidButton_Click"/>
+						<Button Grid.Row="1" Grid.Column="7" Margin="0,0,12,8" Content="Set" Click="SetDcdcUuidButton_Click"/>
+						<TextBlock Grid.Row="1" Grid.Column="8" Margin="0,0,6,8" VerticalAlignment="Center" Text="Version:"/>
+						<TextBox Grid.Row="1" Grid.Column="9" x:Name="DcdcVersionTextBox" IsReadOnly="True" HorizontalAlignment="Left" Width="120" Margin="0,0,0,8"/>
+
+						<TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,10,0" VerticalAlignment="Center" Text="Main UUID:"/>
+						<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="5" x:Name="MainUuidTextBox" Margin="0,0,10,0"/>
+						<Button Grid.Row="2" Grid.Column="6" Margin="0,0,8,0" Content="Get" Click="GetMainUuidButton_Click"/>
+						<Button Grid.Row="2" Grid.Column="7" Margin="0,0,12,0" Content="Set" Click="SetMainUuidButton_Click"/>
+						<Button Grid.Row="2" Grid.Column="8" Grid.ColumnSpan="2" x:Name="CommunicationSettingsButton" HorizontalAlignment="Left" Content="Communication Settings..." Click="CommunicationSettingsButton_Click"/>
+					</Grid>
+				</GroupBox>
+
+				<GroupBox Header="DC/DC Converter">
+					<Grid Margin="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,70,Auto,70,Auto,200,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+						<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="VDC1:"/>
+						<NumericUpDown Grid.Row="0" Grid.Column="1" x:Name="Vdc1Numeric" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" Margin="6,0,12,8"/>
+						<TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="Freq1:"/>
+						<NumericUpDown Grid.Row="0" Grid.Column="3" x:Name="Frequency1Numeric" Minimum="0.5" Maximum="5" Increment="0.1" FormatString="0.0" Margin="6,0,12,8"/>
+						<TextBlock Grid.Row="0" Grid.Column="4" VerticalAlignment="Center" Text="Duty1:"/>
+						<NumericUpDown Grid.Row="0" Grid.Column="5" x:Name="DutyCycle1Numeric" Minimum="10" Maximum="90" Increment="10" FormatString="0" Margin="6,0,12,8"/>
+						<StackPanel Grid.Row="0" Grid.Column="6" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" Margin="0,0,12,8">
+							<RadioButton x:Name="SwitchVdc1OffRadio" GroupName="SwitchVdc1" Content="Off" Tag="0" Click="SwitchVdc1_Checked"/>
+							<RadioButton x:Name="SwitchVdc1OnRadio" GroupName="SwitchVdc1" Content="On" Tag="1" Click="SwitchVdc1_Checked"/>
+							<RadioButton x:Name="SwitchVdc1BlinkRadio" GroupName="SwitchVdc1" Content="Blink" Tag="2" Click="SwitchVdc1_Checked"/>
+						</StackPanel>
+						<Button Grid.Row="0" Grid.Column="9" Content="CLR_FAULTS" Margin="0,0,8,8" Click="ClearFaultsVdc1Button_Click"/>
+						<Button Grid.Row="0" Grid.Column="10" Content="STORE" Margin="0,0,8,8" Click="StoreVdc1Button_Click"/>
+						<Button Grid.Row="0" Grid.Column="11" Content="Apply" Margin="0,0,8,8" Click="ApplyVdc1Button_Click"/>
+
+						<TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="VDC2:"/>
+						<NumericUpDown Grid.Row="1" Grid.Column="1" x:Name="Vdc2Numeric" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" Margin="6,0,12,8"/>
+						<TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="Freq2:"/>
+						<NumericUpDown Grid.Row="1" Grid.Column="3" x:Name="Frequency2Numeric" Minimum="0.5" Maximum="5" Increment="0.1" FormatString="0.0" Margin="6,0,12,8"/>
+						<TextBlock Grid.Row="1" Grid.Column="4" VerticalAlignment="Center" Text="Duty2:"/>
+						<NumericUpDown Grid.Row="1" Grid.Column="5" x:Name="DutyCycle2Numeric" Minimum="10" Maximum="90" Increment="10" FormatString="0" Margin="6,0,12,8"/>
+						<StackPanel Grid.Row="1" Grid.Column="6" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" Margin="0,0,12,8">
+							<RadioButton x:Name="SwitchVdc2OffRadio" GroupName="SwitchVdc2" Content="Off" Tag="0" Click="SwitchVdc2_Checked"/>
+							<RadioButton x:Name="SwitchVdc2OnRadio" GroupName="SwitchVdc2" Content="On" Tag="1" Click="SwitchVdc2_Checked"/>
+							<RadioButton x:Name="SwitchVdc2BlinkRadio" GroupName="SwitchVdc2" Content="Blink" Tag="2" Click="SwitchVdc2_Checked"/>
+						</StackPanel>
+						<Button Grid.Row="1" Grid.Column="9" Content="CLR_FAULTS" Margin="0,0,8,8" Click="ClearFaultsVdc2Button_Click"/>
+						<Button Grid.Row="1" Grid.Column="10" Content="STORE" Margin="0,0,8,8" Click="StoreVdc2Button_Click"/>
+						<Button Grid.Row="1" Grid.Column="11" Content="Apply" Margin="0,0,8,8" Click="ApplyVdc2Button_Click"/>
+
+						<DataGrid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="10" x:Name="DcdcStatusGrid" Height="120" Margin="0,0,12,8" AutoGenerateColumns="False" CanUserReorderColumns="False" CanUserResizeColumns="True" CanUserSortColumns="False" GridLinesVisibility="All" HeadersVisibility="All" IsReadOnly="True">
+							<DataGrid.Columns>
+								<DataGridTextColumn Header="Channel" Binding="{ReflectionBinding Channel}" Width="80"/>
+								<DataGridTextColumn Header="CML" Binding="{ReflectionBinding Cml}" Width="70"/>
+								<DataGridTextColumn Header="WORD" Binding="{ReflectionBinding Word}" Width="70"/>
+								<DataGridTextColumn Header="VOUT" Binding="{ReflectionBinding VoutStatus}" Width="70"/>
+								<DataGridTextColumn Header="INPUT" Binding="{ReflectionBinding InputStatus}" Width="70"/>
+								<DataGridTextColumn Header="VDC" Binding="{ReflectionBinding Vdc}" Width="80"/>
+								<DataGridTextColumn Header="IOUT" Binding="{ReflectionBinding Iout}" Width="80"/>
+								<DataGridTextColumn Header="VIN" Binding="{ReflectionBinding Vin}" Width="80"/>
+								<DataGridTextColumn Header="IIN" Binding="{ReflectionBinding Iin}" Width="80"/>
+								<DataGridTextColumn Header="Temp" Binding="{ReflectionBinding Temperature}" Width="80"/>
+							</DataGrid.Columns>
+						</DataGrid>
+						<Button Grid.Row="2" Grid.Column="10" Content="Get STATUS" Margin="0,0,8,8" Click="GetStatusButton_Click"/>
+
+						<TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Switch Off Timer:"/>
+						<NumericUpDown Grid.Row="3" Grid.Column="1" x:Name="SwitchOffTimerNumeric" Minimum="0" Maximum="65535" Increment="1" FormatString="0" Margin="6,0,12,8"/>
+						<Button Grid.Row="3" Grid.Column="2" Content="Set" Margin="0,0,8,8" Click="SetTimerButton_Click"/>
+						<Button Grid.Row="3" Grid.Column="3" Content="Get" Margin="0,0,12,8" Click="GetTimerButton_Click"/>
+						<TextBlock Grid.Row="3" Grid.Column="4" VerticalAlignment="Center" Text="ATtiny Status:"/>
+						<TextBox Grid.Row="3" Grid.Column="5" x:Name="AttinyStatusTextBox" Margin="6,0,12,8"/>
+						<Button Grid.Row="3" Grid.Column="6" Content="Set" Margin="0,0,8,8" Click="SetAttinyStatusButton_Click"/>
+						<Button Grid.Row="3" Grid.Column="7" Content="Get" Margin="0,0,12,8" Click="GetAttinyStatusButton_Click"/>
+						<StackPanel Grid.Row="3" Grid.Column="8" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+							<TextBlock VerticalAlignment="Center" Text="Status LED:"/>
+							<RadioButton x:Name="DcdcStatusLedOffRadio" GroupName="DcdcStatusLed" Content="Off" Tag="0" Click="DcdcStatusLed_Checked"/>
+							<RadioButton x:Name="DcdcStatusLedOnRadio" GroupName="DcdcStatusLed" Content="On" Tag="1" Click="DcdcStatusLed_Checked"/>
+							<RadioButton x:Name="DcdcStatusLedBlinkRadio" GroupName="DcdcStatusLed" Content="Blink" Tag="2" Click="DcdcStatusLed_Checked"/>
+						</StackPanel>
+
+						<TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="RGB LED:"/>
+						<NumericUpDown Grid.Row="4" Grid.Column="1" x:Name="RgbLedIndexNumeric" Minimum="1" Maximum="123" Increment="1" FormatString="0" Margin="6,0,12,0"/>
+						<TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" Text="Red:"/>
+						<NumericUpDown Grid.Row="4" Grid.Column="3" x:Name="RedNumeric" Minimum="0" Maximum="255" Increment="1" FormatString="0" Margin="6,0,12,0"/>
+						<TextBlock Grid.Row="4" Grid.Column="4" VerticalAlignment="Center" Text="Green:"/>
+						<NumericUpDown Grid.Row="4" Grid.Column="5" x:Name="GreenNumeric" Minimum="0" Maximum="255" Increment="1" FormatString="0" Margin="6,0,12,0"/>
+						<TextBlock Grid.Row="4" Grid.Column="6" VerticalAlignment="Center" Text="Blue:"/>
+						<NumericUpDown Grid.Row="4" Grid.Column="7" x:Name="BlueNumeric" Minimum="0" Maximum="255" Increment="1" FormatString="0" Margin="6,0,12,0"/>
+						<CheckBox Grid.Row="4" Grid.Column="8" x:Name="SwitchOffOthersCheckBox" Content="Switch Off Others" Margin="0,0,12,0"/>
+						<CheckBox Grid.Row="4" Grid.Column="9" x:Name="ApplyImmediatelyCheckBox" Content="Apply immediately" Margin="0,0,12,0"/>
+						<Button Grid.Row="4" Grid.Column="10" Content="Set" Margin="0,0,8,0" Click="SetRgbLedButton_Click"/>
+						<Button Grid.Row="4" Grid.Column="11" Content="Light Show" Click="LightShowButton_Click"/>
+					</Grid>
+				</GroupBox>
+
+				<GroupBox Header="Main Board">
+					<Grid Margin="10" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,140,Auto,110,Auto,110,Auto,110,Auto,110,Auto,*">
+						<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="MUX:"/>
+						<ComboBox Grid.Row="0" Grid.Column="1" x:Name="MuxComboBox" Margin="6,0,12,8" SelectionChanged="MuxComboBox_SelectionChanged"/>
+						<Button Grid.Row="0" Grid.Column="2" x:Name="SingleMeasurementButton" Content="Single Measurement" Margin="0,0,8,8" Click="SingleMeasurementButton_Click"/>
+						<Button Grid.Row="0" Grid.Column="3" x:Name="MeasurementDialogButton" Content="Measurement..." Margin="0,0,12,8" Click="MeasurementDialogButton_Click"/>
+						<CheckBox Grid.Row="0" Grid.Column="4" x:Name="MainBoardStatusLedCheckBox" Content="Status LED" Margin="0,0,12,8" Click="MainBoardStatusLedCheckBox_Changed"/>
+						<Button Grid.Row="0" Grid.Column="5" Content="Get Temperatures" Margin="0,0,12,8" Click="GetTemperaturesButton_Click"/>
+						<TextBlock Grid.Row="0" Grid.Column="6" VerticalAlignment="Center" Text="T1:"/>
+						<TextBox Grid.Row="0" Grid.Column="7" x:Name="T1TextBox" IsReadOnly="True" Margin="6,0,12,8"/>
+						<TextBlock Grid.Row="0" Grid.Column="8" VerticalAlignment="Center" Text="T2:"/>
+						<TextBox Grid.Row="0" Grid.Column="9" x:Name="T2TextBox" IsReadOnly="True" Margin="6,0,12,8"/>
+						<TextBlock Grid.Row="0" Grid.Column="10" VerticalAlignment="Center" Text="T3:"/>
+						<TextBox Grid.Row="0" Grid.Column="11" x:Name="T3TextBox" IsReadOnly="True" Margin="6,0,0,8"/>
+
+						<TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="ADC V:"/>
+						<TextBox Grid.Row="1" Grid.Column="1" x:Name="AdcVoltageTextBox" IsReadOnly="True" Margin="6,0,12,8"/>
+						<TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="ADC R:"/>
+						<TextBox Grid.Row="1" Grid.Column="3" x:Name="AdcResistanceTextBox" IsReadOnly="True" Margin="6,0,12,8"/>
+
+						<TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Folder:"/>
+						<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" x:Name="FolderTextBox" IsReadOnly="True" Margin="6,0,12,8"/>
+						<Button Grid.Row="2" Grid.Column="5" x:Name="SetFolderButton" Content="Set..." Margin="0,0,12,8" Click="SetFolderButton_Click"/>
+						<TextBlock Grid.Row="2" Grid.Column="6" VerticalAlignment="Center" Text="Postfix:"/>
+						<TextBox Grid.Row="2" Grid.Column="7" x:Name="PostfixTextBox" Margin="6,0,12,8"/>
+						<CheckBox Grid.Row="2" Grid.Column="8" x:Name="SkipEvery2ndCheckBox" Content="Skip every 2nd Channel" Margin="0,0,12,8"/>
+						<CheckBox Grid.Row="2" Grid.Column="9" x:Name="InteractiveMeasurementCheckBox" Content="Interactive" Margin="0,0,12,8"/>
+
+						<ToggleButton Grid.Row="3" Grid.Column="0" x:Name="PeriodicMeasurementToggle" Content="Measure" Click="PeriodicMeasurementToggle_Changed" Margin="0,0,12,0"/>
+						<TextBlock Grid.Row="3" Grid.Column="1" VerticalAlignment="Center" Text="Every (min):"/>
+						<NumericUpDown Grid.Row="3" Grid.Column="2" x:Name="MeasureEveryNumeric" Minimum="0.1" Maximum="120" Increment="0.1" FormatString="0.0" Margin="6,0,12,0"/>
+						<Button Grid.Row="3" Grid.Column="3" x:Name="SkipTimerButton" Content="Skip wait" Click="SkipTimerButton_Click" Margin="0,0,12,0"/>
+						<TextBlock Grid.Row="3" Grid.Column="4" Grid.ColumnSpan="8" x:Name="TimerMeasurementStatusTextBlock" VerticalAlignment="Center" Text="Periodic measurement is disabled."/>
+					</Grid>
+				</GroupBox>
+			</StackPanel>
+		</ScrollViewer>
+
+		<TextBox Grid.Row="1" x:Name="StatusTextBox" Margin="0,10,0,0" AcceptsReturn="True" TextWrapping="Wrap" IsReadOnly="True" Height="120" VerticalContentAlignment="Top"/>
+	</Grid>
+</Window>
