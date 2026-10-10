@@ -37,15 +37,7 @@
 					BorderThickness="1"
 				  SelectionMode="Single">
 			<DataGrid.Columns>
-				<DataGridTemplateColumn Header="" Width="72">
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-							<Button Content="Load..."
-									Tag="{Binding BoardIndex}"
-									Click="LoadProfile_Click" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
+				<DataGridTextColumn Header="" Width="40" Binding="{ReflectionBinding BoardIndex}" />
 				<DataGridTemplateColumn Header="Profile" Width="160">
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>

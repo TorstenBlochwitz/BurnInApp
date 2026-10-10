@@ -3,24 +3,89 @@
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:BurnInApp"
-		mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="520"
+		mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="620"
 		x:Class="BurnInApp.BurnInProfileViewerDlg"
 		Title="Burn-In Profile Viewer"
-		Width="900" Height="520"
+		Width="1100" Height="620"
+		MinWidth="950" MinHeight="520"
 		WindowStartupLocation="CenterOwner"
-		CanResize="False">
+		CanResize="True"
+		FontSize="14">
 
-	<Grid RowDefinitions="Auto,*,Auto,Auto" Margin="10">
+	<Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="12">
 		<!-- File Name -->
-		<DockPanel Grid.Row="0" Margin="0,0,0,5">
-			<Label DockPanel.Dock="Left" Content="File:" Width="140" VerticalAlignment="Center"/>
-			<TextBox x:Name="FileNameTextBox" IsReadOnly="True" VerticalAlignment="Center"/>
+		<DockPanel Grid.Row="0" Margin="0,0,0,10">
+			<Button x:Name="LoadProfileButton"
+					DockPanel.Dock="Left"
+					Content="Load..."
+					Width="140"
+					MinHeight="34"
+					FontSize="15"
+					Click="LoadProfile_Click"/>
+			<TextBox x:Name="FileNameTextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34"/>
+		</DockPanel>
+
+		<!-- Bank panels -->
+		<Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,10">
+			<Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Margin="0,0,6,0" Padding="10">
+				<StackPanel Spacing="6">
+					<Label Content="Bank 1" FontWeight="Bold" FontSize="16"/>
+					<DockPanel>
+						<Label DockPanel.Dock="Left" Content="Type:" Width="100" VerticalAlignment="Center" FontSize="15"/>
+						<TextBox x:Name="Type1TextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34"/>
+					</DockPanel>
+					<DockPanel>
+						<Label DockPanel.Dock="Left" Content="Resistance:" Width="100" VerticalAlignment="Center" FontSize="15"/>
+						<Label DockPanel.Dock="Right" Content="Ohm" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="15"/>
+						<TextBox x:Name="Resistance1TextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34"/>
+					</DockPanel>
+					<DockPanel>
+						<Label DockPanel.Dock="Left" Content="Deviation:" Width="100" VerticalAlignment="Center" FontSize="15"/>
+						<Label DockPanel.Dock="Right" Content="Ohm" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="15"/>
+						<TextBox x:Name="Deviation1TextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34"/>
+					</DockPanel>
+					<DockPanel>
+						<Label DockPanel.Dock="Left" Content="Number:" Width="100" VerticalAlignment="Center" FontSize="15"/>
+						<TextBox x:Name="Number1TextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34" Width="90" HorizontalAlignment="Left"/>
+					</DockPanel>
+				</StackPanel>
+			</Border>
+
+			<Border x:Name="Bank2Panel" Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Margin="6,0,0,0" Padding="10">
+				<StackPanel Spacing="6">
+					<Label Content="Bank 2" FontWeight="Bold" FontSize="16"/>
+					<DockPanel>
+						<Label DockPanel.Dock="Left" Content="Type:" Width="100" VerticalAlignment="Center" FontSize="15"/>
+						<TextBox x:Name="Type2TextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34"/>
+					</DockPanel>
+					<DockPanel>
+						<Label DockPanel.Dock="Left" Content="Resistance:" Width="100" VerticalAlignment="Center" FontSize="15"/>
+						<Label DockPanel.Dock="Right" Content="Ohm" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="15"/>
+						<TextBox x:Name="Resistance2TextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34"/>
+					</DockPanel>
+					<DockPanel>
+						<Label DockPanel.Dock="Left" Content="Deviation:" Width="100" VerticalAlignment="Center" FontSize="15"/>
+						<Label DockPanel.Dock="Right" Content="Ohm" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="15"/>
+						<TextBox x:Name="Deviation2TextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34"/>
+					</DockPanel>
+					<DockPanel>
+						<Label DockPanel.Dock="Left" Content="Number:" Width="100" VerticalAlignment="Center" FontSize="15"/>
+						<TextBox x:Name="Number2TextBox" IsReadOnly="True" VerticalAlignment="Center" FontSize="15" MinHeight="34" Width="90" HorizontalAlignment="Left"/>
+					</DockPanel>
+				</StackPanel>
+			</Border>
+		</Grid>
+
+		<!-- Measurement Rate -->
+		<DockPanel Grid.Row="2" Margin="0,0,0,10">
+			<Label DockPanel.Dock="Left" Content="Measurement Rate:" Width="140" VerticalAlignment="Center" FontSize="15"/>
+			<TextBox x:Name="MeasurementRateTextBox" IsReadOnly="True" VerticalAlignment="Center" Width="140" HorizontalAlignment="Left" FontSize="15" MinHeight="34"/>
 		</DockPanel>
 
 		<!-- Profile Steps -->
 		<DataGrid x:Name="ProfileDataGrid"
-				  Grid.Row="1"
-				  Margin="0,0,0,5"
+				  Grid.Row="3"
+				  Margin="0,0,0,10"
 				  AutoGenerateColumns="False"
 				  CanUserReorderColumns="False"
 				  CanUserResizeColumns="True"
@@ -29,100 +94,72 @@
 				  HeadersVisibility="All"
 				  BorderBrush="Gray"
 				  BorderThickness="1"
-				  RowHeight="22">
+				  RowHeight="26"
+				  HorizontalScrollBarVisibility="Auto"
+				  VerticalScrollBarVisibility="Auto">
 			<DataGrid.Columns>
-				<DataGridTextColumn Header="Step" Binding="{ReflectionBinding StepNumber}" IsReadOnly="True" Width="40"/>
-				<DataGridTextColumn Header="Name" Binding="{ReflectionBinding Name}" IsReadOnly="True" Width="120"/>
-				<DataGridTextColumn Header="Duration" Binding="{ReflectionBinding Duration}" IsReadOnly="True" Width="80"/>
-				<DataGridTextColumn Header="Power1" Binding="{ReflectionBinding PowerPerChannel1}" IsReadOnly="True" Width="60"/>
-				<DataGridTextColumn Header="MaxI1" Binding="{ReflectionBinding MaxCurrent1}" IsReadOnly="True" Width="60"/>
-				<DataGridTextColumn Header="MaxU1" Binding="{ReflectionBinding MaxVoltage1}" IsReadOnly="True" Width="60"/>
-				<DataGridTextColumn Header="Freq1" Binding="{ReflectionBinding Frequency1}" IsReadOnly="True" Width="60"/>
-				<DataGridTextColumn Header="Duty1" Binding="{ReflectionBinding DutyCycle1}" IsReadOnly="True" Width="50"/>
-				<DataGridTextColumn Header="VDuT1" Binding="{ReflectionBinding ComputeVDuT1}" IsReadOnly="True" Width="50"/>
-				<DataGridTextColumn Header="Power2" Binding="{ReflectionBinding PowerPerChannel2}" IsReadOnly="True" Width="60"/>
-				<DataGridTextColumn Header="MaxI2" Binding="{ReflectionBinding MaxCurrent2}" IsReadOnly="True" Width="60"/>
-				<DataGridTextColumn Header="MaxU2" Binding="{ReflectionBinding MaxVoltage2}" IsReadOnly="True" Width="60"/>
-				<DataGridTextColumn Header="Freq2" Binding="{ReflectionBinding Frequency2}" IsReadOnly="True" Width="60"/>
-				<DataGridTextColumn Header="Duty2" Binding="{ReflectionBinding DutyCycle2}" IsReadOnly="True" Width="50"/>
-				<DataGridTextColumn Header="VDuT2" Binding="{ReflectionBinding ComputeVDuT2}" IsReadOnly="True" Width="50"/>
-				<DataGridTextColumn Header="Measure" Binding="{ReflectionBinding Measure}" IsReadOnly="True" Width="60"/>
+				<DataGridTemplateColumn Header="Step" Width="72" IsReadOnly="True">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock Text="{ReflectionBinding StepNumber}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="Name" Width="260" IsReadOnly="True">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock Text="{ReflectionBinding Name}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="Duration" Width="135" IsReadOnly="True">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock Text="{ReflectionBinding Duration}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="p1" Width="100" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding PowerPerChannel1}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="Imax1" Width="105" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding MaxCurrent1}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="Vmax1" Width="105" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding MaxVoltage1}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="f1" Width="80" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding Frequency1}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="duty1" Width="95" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding DutyCycle1}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="ComputeVDuT1" Width="155" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding ComputeVDuT1}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="p2" Width="100" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding PowerPerChannel2}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="Imax2" Width="105" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding MaxCurrent2}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="Vmax2" Width="105" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding MaxVoltage2}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="f2" Width="80" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding Frequency2}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="duty2" Width="95" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding DutyCycle2}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="ComputeVDuT2" Width="155" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding ComputeVDuT2}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="Measure" Width="100" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{ReflectionBinding Measure}" Margin="3,0" VerticalAlignment="Center" FontSize="12"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
 			</DataGrid.Columns>
 			<DataGrid.Styles>
 				<Style Selector="DataGridColumnHeader">
 					<Setter Property="Background" Value="LightGray"/>
 					<Setter Property="FontWeight" Value="Normal"/>
 					<Setter Property="FontSize" Value="12"/>
-					<Setter Property="Height" Value="22"/>
-					<Setter Property="Padding" Value="5,2"/>
+					<Setter Property="Height" Value="26"/>
+					<Setter Property="Padding" Value="1,0,0,0"/>
+					<Setter Property="HorizontalContentAlignment" Value="Left"/>
+				</Style>
+				<Style Selector="DataGridColumnHeader /template/ Thumb#PART_LeftHeaderGripper">
+					<Setter Property="Width" Value="1"/>
+					<Setter Property="Background" Value="Transparent"/>
+				</Style>
+				<Style Selector="DataGridColumnHeader /template/ Thumb#PART_RightHeaderGripper">
+					<Setter Property="Width" Value="1"/>
+					<Setter Property="Background" Value="Transparent"/>
 				</Style>
 				<Style Selector="DataGridCell">
 					<Setter Property="FontSize" Value="12"/>
-					<Setter Property="Padding" Value="5,2"/>
+					<Setter Property="Padding" Value="0"/>
 				</Style>
 			</DataGrid.Styles>
 		</DataGrid>
 
-		<!-- Bank panels and Measurement Rate -->
-		<Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,5">
-			<Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Margin="0,0,5,0" Padding="8">
-				<StackPanel Spacing="3">
-					<Label Content="Bank 1" FontWeight="Bold"/>
-					<DockPanel>
-						<Label DockPanel.Dock="Left" Content="Type:" Width="90" VerticalAlignment="Center"/>
-						<TextBox x:Name="Type1TextBox" IsReadOnly="True" VerticalAlignment="Center"/>
-					</DockPanel>
-					<DockPanel>
-						<Label DockPanel.Dock="Left" Content="Number:" Width="90" VerticalAlignment="Center"/>
-						<TextBox x:Name="Number1TextBox" IsReadOnly="True" VerticalAlignment="Center"/>
-					</DockPanel>
-					<DockPanel>
-						<Label DockPanel.Dock="Left" Content="Resistance:" Width="90" VerticalAlignment="Center"/>
-						<Label DockPanel.Dock="Right" Content="Ohm" VerticalAlignment="Center" Margin="5,0,0,0"/>
-						<TextBox x:Name="Resistance1TextBox" IsReadOnly="True" VerticalAlignment="Center"/>
-					</DockPanel>
-					<DockPanel>
-						<Label DockPanel.Dock="Left" Content="Deviation:" Width="90" VerticalAlignment="Center"/>
-						<Label DockPanel.Dock="Right" Content="Ohm" VerticalAlignment="Center" Margin="5,0,0,0"/>
-						<TextBox x:Name="Deviation1TextBox" IsReadOnly="True" VerticalAlignment="Center"/>
-					</DockPanel>
-				</StackPanel>
-			</Border>
-
-			<Border x:Name="Bank2Panel" Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Margin="5,0,0,0" Padding="8">
-				<StackPanel Spacing="3">
-					<Label Content="Bank 2" FontWeight="Bold"/>
-					<DockPanel>
-						<Label DockPanel.Dock="Left" Content="Type:" Width="90" VerticalAlignment="Center"/>
-						<TextBox x:Name="Type2TextBox" IsReadOnly="True" VerticalAlignment="Center"/>
-					</DockPanel>
-					<DockPanel>
-						<Label DockPanel.Dock="Left" Content="Number:" Width="90" VerticalAlignment="Center"/>
-						<TextBox x:Name="Number2TextBox" IsReadOnly="True" VerticalAlignment="Center"/>
-					</DockPanel>
-					<DockPanel>
-						<Label DockPanel.Dock="Left" Content="Resistance:" Width="90" VerticalAlignment="Center"/>
-						<Label DockPanel.Dock="Right" Content="Ohm" VerticalAlignment="Center" Margin="5,0,0,0"/>
-						<TextBox x:Name="Resistance2TextBox" IsReadOnly="True" VerticalAlignment="Center"/>
-					</DockPanel>
-					<DockPanel>
-						<Label DockPanel.Dock="Left" Content="Deviation:" Width="90" VerticalAlignment="Center"/>
-						<Label DockPanel.Dock="Right" Content="Ohm" VerticalAlignment="Center" Margin="5,0,0,0"/>
-						<TextBox x:Name="Deviation2TextBox" IsReadOnly="True" VerticalAlignment="Center"/>
-					</DockPanel>
-				</StackPanel>
-			</Border>
-		</Grid>
-
-		<!-- Measurement Rate and Close button -->
-		<Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-			<DockPanel Grid.Column="0" VerticalAlignment="Center">
-				<Label DockPanel.Dock="Left" Content="Measurement Rate:" Width="140" VerticalAlignment="Center"/>
-				<TextBox x:Name="MeasurementRateTextBox" IsReadOnly="True" VerticalAlignment="Center" Width="120" HorizontalAlignment="Left"/>
-			</DockPanel>
-			<StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-				<Button Content="Close" Width="90" Click="Close_Click" IsDefault="True" IsCancel="True" HorizontalContentAlignment="Center"/>
-			</StackPanel>
-		</Grid>
+		<!-- Close button -->
+		<StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+			<Button Content="Close" Width="100" Click="Close_Click" IsDefault="True" IsCancel="True" HorizontalContentAlignment="Center" FontSize="15"/>
+		</StackPanel>
 	</Grid>
 </Window>

@@ -88,101 +88,117 @@ namespace BurnInApp
             Deviation = new double[2];
             MeasurementRate = TimeSpan.Zero;
 
-            using XLWorkbook workbook = new XLWorkbook(strFile);
-            IXLWorksheet? profileSheet = null;
-            IXLWorksheet? dataSheet = null;
+            XLWorkbook workbook;
             try
             {
-                profileSheet = workbook.Worksheet("Profile");
-                dataSheet = workbook.Worksheet("Data");
+                workbook = new XLWorkbook(strFile);
+            }
+            catch (IOException)
+            {
+                return (false, $"Loading {strFile} failed!\n\nThe selected profile file is currently open in another application, e.g. Microsoft Excel.\n\nPlease close the file and try again.");
             }
             catch (Exception e)
             {
                 return (false, $"Loading {strFile} failed!\nError: {e.Message}.");
             }
 
-            var profileRows = ReadTable(profileSheet);
-            int rowIndex = 0;
-            try
+            using (workbook)
             {
-                foreach (var row in profileRows)
+                IXLWorksheet? profileSheet = null;
+                IXLWorksheet? dataSheet = null;
+                try
                 {
-                    rowIndex++;
-                    var step = new ProfileStep
+                    profileSheet = workbook.Worksheet("Profile");
+                    dataSheet = workbook.Worksheet("Data");
+                }
+                catch (Exception e)
+                {
+                    return (false, $"Loading {strFile} failed!\nError: {e.Message}.");
+                }
+
+                var profileRows = ReadTable(profileSheet);
+                int rowIndex = 0;
+                try
+                {
+                    foreach (var row in profileRows)
                     {
-                        Name = GetString(row, "Name"),
-                        // Duration is stored in Excel as a duration (fraction of a day)
-                        Duration = TimeSpan.FromDays(GetDouble(row, "Duration"))
-                    };
-                    step.PowerPerChannel[0] = GetDouble(row, "PowerPerChannel1");
-                    step.MaxCurrent[0] = GetDouble(row, "MaxCurrent1");
-                    step.MaxVoltage[0] = GetDouble(row, "MaxVoltage1");
-                    step.Frequency[0] = GetDouble(row, "Frequency1");
-                    step.DutyCycle[0] = GetDouble(row, "DutyCycle1");
-                    step.PowerPerChannel[1] = GetDouble(row, "PowerPerChannel2");
-                    step.MaxCurrent[1] = GetDouble(row, "MaxCurrent2");
-                    step.MaxVoltage[1] = GetDouble(row, "MaxVoltage2");
-                    step.Frequency[1] = GetDouble(row, "Frequency2");
-                    step.DutyCycle[1] = GetDouble(row, "DutyCycle2");
-                    // if the Excel Sheet does not contain the ComputeVDuT1/2 column, default to 0
-                    step.ComputeVDuT[0] = row.ContainsKey("ComputeVDuT1") ? (int)GetDouble(row, "ComputeVDuT1") : 0;
-                    step.ComputeVDuT[1] = row.ContainsKey("ComputeVDuT2") ? (int)GetDouble(row, "ComputeVDuT2") : 0;
-                    // if the Excel Sheet does not contain the Measure column, default to 0.0
-                    step.Measure = row.ContainsKey("Measure") ? GetDouble(row, "Measure") : 0.0;
-                    step.MeasurementHappened = 0;
-                    Steps.Add(step);
+                        rowIndex++;
+                        var step = new ProfileStep
+                        {
+                            Name = GetString(row, "Name"),
+                            // Duration is stored in Excel as a duration (fraction of a day)
+                            Duration = TimeSpan.FromDays(GetDouble(row, "Duration"))
+                        };
+                        step.PowerPerChannel[0] = GetDouble(row, "PowerPerChannel1");
+                        step.MaxCurrent[0] = GetDouble(row, "MaxCurrent1");
+                        step.MaxVoltage[0] = GetDouble(row, "MaxVoltage1");
+                        step.Frequency[0] = GetDouble(row, "Frequency1");
+                        step.DutyCycle[0] = GetDouble(row, "DutyCycle1");
+                        step.PowerPerChannel[1] = GetDouble(row, "PowerPerChannel2");
+                        step.MaxCurrent[1] = GetDouble(row, "MaxCurrent2");
+                        step.MaxVoltage[1] = GetDouble(row, "MaxVoltage2");
+                        step.Frequency[1] = GetDouble(row, "Frequency2");
+                        step.DutyCycle[1] = GetDouble(row, "DutyCycle2");
+                        // if the Excel Sheet does not contain the ComputeVDuT1/2 column, default to 0
+                        step.ComputeVDuT[0] = row.ContainsKey("ComputeVDuT1") ? (int)GetDouble(row, "ComputeVDuT1") : 0;
+                        step.ComputeVDuT[1] = row.ContainsKey("ComputeVDuT2") ? (int)GetDouble(row, "ComputeVDuT2") : 0;
+                        // if the Excel Sheet does not contain the Measure column, default to 0.0
+                        step.Measure = row.ContainsKey("Measure") ? GetDouble(row, "Measure") : 0.0;
+                        step.MeasurementHappened = 0;
+                        Steps.Add(step);
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                return (false, $"Error: Loading {strFile} failed!\nError in row {rowIndex}: {e.Message}.");
-            }
-
-            // check durations
-            RemainingDurationStep = new TimeSpan[Steps.Count];
-            for (int i = 0; i < Steps.Count; i++)
-            {
-                double minutes = Steps[i].Duration.TotalMinutes;
-                if (minutes > 65535)
+                catch (Exception e)
                 {
-                    return (false, $"Error: Loading {strFile} failed!\n\nError in row {i + 1}: Duration of {minutes} min is larger than 65535 min. This is not supported!\n\nSplit this profile step into steps with smaller durations!");
+                    return (false, $"Error: Loading {strFile} failed!\nError in row {rowIndex}: {e.Message}.");
                 }
-                RemainingDurationStep[i] = Steps[i].Duration;
-            }
 
-            var dataRows = ReadTable(dataSheet);
-            var dataRow = dataRows.FirstOrDefault();
-            if (dataRow == null)
-            {
-                return (false, $"Loading {strFile} failed!\nError in Sheet 'Data': sheet is empty.");
-            }
-            try
-            {
-                Type[0] = GetString(dataRow, "Type1");
-                NumberOfChannels[0] = GetDouble(dataRow, "NumberOfChannels1");
-                Resistance[0] = GetDouble(dataRow, "Resistance1");
-                Deviation[0] = GetDouble(dataRow, "Deviation1");
-                Type[1] = GetString(dataRow, "Type2");
-                NumberOfChannels[1] = GetDouble(dataRow, "NumberOfChannels2");
-                Resistance[1] = GetDouble(dataRow, "Resistance2");
-                Deviation[1] = GetDouble(dataRow, "Deviation2");
-                MeasurementRate = TimeSpan.FromMinutes(GetDouble(dataRow, "MeasurementRate"));
-            }
-            catch (Exception e)
-            {
-                return (false, $"Loading {strFile} failed!\nError in Sheet 'Data': {e.Message}.");
-            }
+                // check durations
+                RemainingDurationStep = new TimeSpan[Steps.Count];
+                for (int i = 0; i < Steps.Count; i++)
+                {
+                    double minutes = Steps[i].Duration.TotalMinutes;
+                    if (minutes > 65535)
+                    {
+                        return (false, $"Error: Loading {strFile} failed!\n\nError in row {i + 1}: Duration of {minutes} min is larger than 65535 min. This is not supported!\n\nSplit this profile step into steps with smaller durations!");
+                    }
+                    RemainingDurationStep[i] = Steps[i].Duration;
+                }
 
-            if (GetNoSteps() > 0)
-            {
-                FileName = Path.GetFileName(strFile);
-                CompleteFileName = strFile;
-                ProfileStatus = ProfileStatusEnum.READY_TO_RUN;
-            }
-            else
-            {
-                Steps = new List<ProfileStep>();
-                return (false, $"Error: The file {strFile} does not contain profile data.");
+                var dataRows = ReadTable(dataSheet);
+                var dataRow = dataRows.FirstOrDefault();
+                if (dataRow == null)
+                {
+                    return (false, $"Loading {strFile} failed!\nError in Sheet 'Data': sheet is empty.");
+                }
+                try
+                {
+                    Type[0] = GetString(dataRow, "Type1");
+                    NumberOfChannels[0] = GetDouble(dataRow, "NumberOfChannels1");
+                    Resistance[0] = GetDouble(dataRow, "Resistance1");
+                    Deviation[0] = GetDouble(dataRow, "Deviation1");
+                    Type[1] = GetString(dataRow, "Type2");
+                    NumberOfChannels[1] = GetDouble(dataRow, "NumberOfChannels2");
+                    Resistance[1] = GetDouble(dataRow, "Resistance2");
+                    Deviation[1] = GetDouble(dataRow, "Deviation2");
+                    MeasurementRate = TimeSpan.FromMinutes(GetDouble(dataRow, "MeasurementRate"));
+                }
+                catch (Exception e)
+                {
+                    return (false, $"Loading {strFile} failed!\nError in Sheet 'Data': {e.Message}.");
+                }
+
+                if (GetNoSteps() > 0)
+                {
+                    FileName = Path.GetFileName(strFile);
+                    CompleteFileName = strFile;
+                    ProfileStatus = ProfileStatusEnum.READY_TO_RUN;
+                }
+                else
+                {
+                    Steps = new List<ProfileStep>();
+                    return (false, $"Error: The file {strFile} does not contain profile data.");
+                }
             }
 
             return (ret, status);
