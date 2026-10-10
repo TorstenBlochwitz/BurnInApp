@@ -193,9 +193,9 @@ classdef BurnInProfile < handle
         end
         function ret = GetMaxNofEmitters(this)
             ret = 0;
-            fprintf("File: %s\n", this.fileName);
+            %fprintf("File: %s\n", this.fileName);
             if this.isProfileLoaded()
-                fprintf("n1 = %f, n2 = %f\n", this.NumberOfChannels(1), this.NumberOfChannels(2));
+                %fprintf("n1 = %f, n2 = %f\n", this.NumberOfChannels(1), this.NumberOfChannels(2));
 
                 ret = sum(this.NumberOfChannels);
             end

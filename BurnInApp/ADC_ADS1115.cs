@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 
 namespace BurnInApp
@@ -17,7 +16,6 @@ namespace BurnInApp
         public int MPAddr { get; } = 0xE0;
         public byte COn { get; }
         public byte COff { get; }
-        public byte[] LastReadRaw { get; private set; } = new byte[] { 0, 0 };
         public int NumRepeat { get; set; } = 5;
 
         public ADC_ADS1115(MBC_TB? mbc, int address, int offset, int mpAddr, byte cOn, byte cOff)
@@ -42,7 +40,7 @@ namespace BurnInApp
 
             using (new I2CMultiplexerPCA9542A(Mbc, Offset, MPAddr, COn, COff))
             {
-                // reads differential voltage between channel 0 and 1
+                // reads single-ended voltage on channel 0 to mirror the current MATLAB logic
                 // adapted from https://github.com/adafruit/Adafruit_ADS1X15
                 ushort config = 0;
                 config |= 0x0003; // ADS1X15_REG_CONFIG_CQUE_1CONV: Disable the comparator and put ALERT/RDY in high state (default)
@@ -81,14 +79,14 @@ namespace BurnInApp
                 config |= 0x0000; // ADS1X15_REG_CONFIG_CLAT_NONLAT: Non-latching (default val)
                 config |= 0x0000; // ADS1X15_REG_CONFIG_CPOL_ACTVLOW: Alert/Rdy active low   (default val)
                 config |= 0x0000; // ADS1X15_REG_CONFIG_CMODE_TRAD: Traditional comparator (default val)
-                config |= 0x0100; // ADS1X15_REG_CONFIG_MODE_SINGLE: Single Shot Mode (default)
+                config |= (ushort)ADS1115.ADS1X15_REG_CONFIG_MODE_CONTIN;
                 config |= (ushort)gain;
                 config |= 0x0080; // RATE_ADS1115_128SPS (default)
                 config |= (ushort)configMux;
-                config |= 0x8000; // ADS1X15_REG_CONFIG_OS_SINGLE: Set to start a single-conversion
 
                 // write to config register
                 byte[] bytes = new byte[] { 0x01, (byte)(config >> 8), (byte)(config & 0xFF) };
+                bool floating = false;
 
                 for (int i = 1; i <= NumRepeat; i++)
                 {
@@ -100,34 +98,38 @@ namespace BurnInApp
                         byte[] status = Mbc.QueryBytesI2C(Address, Offset, 0x01, 1, 2);
                         if (!MBC_USB_TCP.IsEqualMask(status, new byte[] { bytes[1], bytes[2] }, new byte[] { 0b11111111, 0b11111110 }))
                         {
-                            Console.WriteLine("Problem1 in ADC: Incorrect config register");
                             Mbc.HandleError("029");
                         }
+
                         // wait until conversion is complete
                         Thread.Sleep(100);
+
                         // read conversion result
                         byte[] raw1 = Mbc.QueryBytesI2C(Address, Offset, 0x00, 1, 2);
-                        // Check if there was really a reading or if the last
-                        // conversion result was returned
-                        if (raw1.SequenceEqual(LastReadRaw))
-                        {
-                            Console.WriteLine("Problem2 in ADC: No conversion happened");
-                            Mbc.HandleError("029");
-                        }
+                        double v1 = ComputeVolts(gain, raw1);
+
                         // read a second time to check if we read correct values
                         byte[] raw2 = Mbc.QueryBytesI2C(Address, Offset, 0x00, 1, 2);
-                        if (!raw1.SequenceEqual(raw2))
+                        double v2 = ComputeVolts(gain, raw2);
+
+                        if ((v1 > 5.1) || (v2 > 5.1))
                         {
-                            Console.WriteLine("Problem3 in ADC: Wrong values read");
-                            Mbc.HandleError("029");
+                            floating = true;
                         }
-                        else
+
+                        if (Math.Abs(v1 - v2) < Math.Max(0.01, 0.1 * Math.Max(Math.Abs(v1), Math.Abs(v2))))
                         {
-                            LastReadRaw = raw1;
-                            // convert to voltage, considering gain
-                            v = ComputeVolts(gain, raw1);
+                            v = (v1 + v2) / 2;
                             return v;
                         }
+
+                        if (i == NumRepeat && floating)
+                        {
+                            v = 0.0;
+                            return v;
+                        }
+
+                        Mbc.HandleError("029");
                     }
                     catch (Exception e)
                     {

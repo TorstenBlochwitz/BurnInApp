@@ -77,7 +77,7 @@ classdef MBC_TB < MBC_USB_TCP
         end
     end
     
-    methods(Access = protected)
+    methods
         %overwritten function of base class to repeat sending in case of
         %an error due to timing
         function switchI2C(this,port)

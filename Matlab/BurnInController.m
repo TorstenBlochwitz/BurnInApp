@@ -2,7 +2,7 @@ classdef BurnInController < handle
    
     properties
         appName = "BurnIn App";
-        version = "3.2.0";
+        version = "3.2.2";
         statusFile StatusFile;
         settings BurnInSettings;
         mbc MBC_TB;
@@ -565,7 +565,8 @@ classdef BurnInController < handle
                             currProfile.stopTime = now;
                             this.burnInDev(this.currActionDevice).switchOff(false);
                             this.VDCSwitchedOn(this.currActionDevice) = false;
-                            this.statusFile.addMsg(msgLevel.INFO, sprintf("Board %d: Profile '%s' finshed sucessfully. SNr: '%s' - '%s'", index, regexprep(string(currProfile.getCompleteFileName()), '\\([abfnrtv\\])', '\\\\$1'), this.serialNumber(index), SNrEnd));
+                            [~, SNrEnd] = getSNr(this.serialNumber(this.currActionDevice), this.numberOfEmitters(this.currActionDevice));
+                            this.statusFile.addMsg(msgLevel.INFO, sprintf("Board %d: Profile '%s' finshed sucessfully. SNr: '%s' - '%s'", this.currActionDevice, regexprep(string(currProfile.getCompleteFileName()), '\\([abfnrtv\\])', '\\\\$1'), this.serialNumber(this.currActionDevice), SNrEnd));
                         end
                         ret = 1;
                     end
@@ -577,11 +578,11 @@ classdef BurnInController < handle
             this.burnInAction(index).nextAction = action;
         end
         function ret = GetMaxNofEmitters(this, index)
-            fprintf("index: %f\n", index);
+            %fprintf("index: %f\n", index);
             max1 = this.burnInDev(index).GetMaxNofEmitters();
-            fprintf("max1 %f\n", max1);
+            %fprintf("max1 %f\n", max1);
             max2 = this.burnInProfile(index).GetMaxNofEmitters();
-            fprintf("max2 %f\n", max2);
+            %fprintf("max2 %f\n", max2);
             ret = min(max1, max2);
         end
         function setStatus(this, index, status)

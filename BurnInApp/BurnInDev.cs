@@ -202,7 +202,7 @@ namespace BurnInApp
                 for (int j = 0; j < n; j++)
                 {
                     MainBoard.SetMUX(vdcChannel);
-                    vMeas[j] = MainBoard.Adc!.GetVoltage(ADS1115.CONFIG_MUX_SINGLE_0, ADS1115.GAIN_TWOTHIRDS_6_144);
+                    vMeas[j] = MainBoard.Adc!.GetVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
                 }
                 vdc = TrimmedMean(vMeas);
                 if (measurementOK)
@@ -211,7 +211,7 @@ namespace BurnInApp
                     for (int j = 0; j < n; j++)
                     {
                         MainBoard.SetMUX(channel);
-                        vMeas[j] = MainBoard.Adc!.GetVoltage(ADS1115.CONFIG_MUX_SINGLE_0, ADS1115.GAIN_TWOTHIRDS_6_144);
+                        vMeas[j] = MainBoard.Adc!.GetVoltageDiff(ADS1115.CONFIG_MUX_DIFF_0_1, ADS1115.GAIN_TWOTHIRDS_6_144);
                     }
                     vr = TrimmedMean(vMeas);
                     if (vr < 0.01)

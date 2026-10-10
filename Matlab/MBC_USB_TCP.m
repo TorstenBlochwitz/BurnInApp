@@ -814,7 +814,7 @@ classdef MBC_USB_TCP < handle
         
         %%
     end
-    methods(Access = protected)
+    methods
         %---------------------------------------------------------------------
         function switchI2C(this,port)
             % switch between internal and DUT port

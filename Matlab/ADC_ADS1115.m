@@ -66,15 +66,16 @@ classdef ADC_ADS1115 < handle
             config = bitor(config, 0x0000); %ADS1X15_REG_CONFIG_CLAT_NONLAT: Non-latching (default val)
             config = bitor(config, 0x0000); %ADS1X15_REG_CONFIG_CPOL_ACTVLOW: Alert/Rdy active low   (default val)
             config = bitor(config, 0x0000); %ADS1X15_REG_CONFIG_CMODE_TRAD: Traditional comparator (default val)
-            config = bitor(config, 0x0100); %ADS1X15_REG_CONFIG_MODE_SINGLE: Single Shot Mode (default)
+            config = bitor(config, 0x0000); %ADS1X15_REG_CONFIG_MODE_CONTIN: %Continuous conversion mode
+            %config = bitor(config, 0x0100); %ADS1X15_REG_CONFIG_MODE_SINGLE: Single Shot Mode (default)
             config = bitor(config, gain);
             config = bitor(config, 0x0080); %RATE_ADS1115_128SPS (default)
             config = bitor(config, configMux);
-            config = bitor(config, 0x8000); %ADS1X15_REG_CONFIG_OS_SINGLE: Set to start a single-conversion
+            %config = bitor(config, 0x8000); %ADS1X15_REG_CONFIG_OS_SINGLE: Set to start a single-conversion
             
             %write to config register
             bytes = [uint8(0x01) uint8(bitshift(config, -8)) uint8(bitand(config, 0b0000000011111111))];
-
+            floating = false;
             for i=1:1:this.nRepeat
                 try
                     this.mbc.writeBytesI2C(this.address, this.offset, bytes);
@@ -82,30 +83,61 @@ classdef ADC_ADS1115 < handle
                     %check if config arrived corrcetly at ADS1115
                     status = this.mbc.queryBytesI2C(this.address, this.offset, 0x01, 1, 2);
                     if ~isequalmask(status, [bytes(2) bytes(3)], [0b11111111 0b11111110])
-                        fprintf('Problem1 in ADC: Incorrect config register\n');
+                        %fprintf('Problem1 in ADC: Incorrect config register\n');
                         this.mbc.CBerror('029');
                     end
                     %wait until conversion is complete
                     pause(0.1);
                     %read conversion result
                     raw1 = this.mbc.queryBytesI2C(this.address, this.offset, 0x00, 1, 2);
-                    %Check if there was really a reading or if the last
-                    %conversion result was returned
-                    if(isequal(raw1, this.lastReadRaw))
-                        fprintf('Problem2 in ADC: No conversion happened\n');
-                        this.mbc.CBerror('029');
-                    end
+                    v1 = this.computeVolts(gain, raw1);
                     %read a second time to check if we read correct values
                     raw2 = this.mbc.queryBytesI2C(this.address, this.offset, 0x00, 1, 2);
-                    if(~isequal(raw1, raw2))
-                        fprintf('Problem3 in ADC: Wrong values read\n');
-                        this.mbc.CBerror('029');
-                    else
-                        this.lastReadRaw = raw1;
-                        %convert to voltage, considering gain
-                        v = this.computeVolts(gain, raw1);
-                        return
+                    v2 = this.computeVolts(gain, raw2);
+                    if(v1 > 5.1) || (v2 > 5.1)
+                        floating = true;
                     end
+                    %Check if the two measured voltage differ too much             
+                    if abs(v1 - v2) < max(0.01, 0.1 * max(abs(v1),abs(v2)))
+                        v = (v1 + v2)/2;
+                        return
+                    else
+                        % v1 and v2 differ more than 10%: there might have been a
+                        % problem in reading the conversion result or an
+                        % indication for a floating input
+                        if i == this.nRepeat && floating
+                            v = 0.0;
+                            return
+                        end
+                        %fprintf('Problem2 in ADC: Reading the conversion result: v1 = %f v2 = %f\n', v1, v2);
+                        this.mbc.CBerror('029');
+                    end
+                    % 1.try: Check abs. difference
+                    % if abs(v - vCheck) > 0.1 * abs(v)
+                    %     % differs more than 10% there might have been a
+                    %     % problem in reading the conversion result
+                    %     fprintf('Problem2 in ADC: Reading the conversion result: v = %f vCheck = %f\n', v, vCheck);
+                    %     this.mbc.CBerror('029');
+                    % else
+                    %     return
+                    % end
+                    % Initial try: Check if there was really a reading or if the last
+                    % %conversion result was returned
+                    % if(isequal(raw1, this.lastReadRaw))
+                    %     %fprintf('Problem2 in ADC: No conversion happened\n');
+                    %     this.mbc.CBerror('029');
+                    % end
+                    % %read a second time to check if we read correct values
+                    % raw2 = this.mbc.queryBytesI2C(this.address, this.offset, 0x00, 1, 2);
+                    % if(~isequal(raw1, raw2))
+                    %     %fprintf('Problem3 in ADC: Wrong values read\n');
+                    %     this.mbc.CBerror('029');
+                    % else
+                    %     this.lastReadRaw = raw1;
+                    %     %convert to voltage, considering gain
+                    %     v = this.computeVolts(gain, raw1);
+                    %     return
+                    % end
                 catch e
                     if this.debug
                         this.mbc.statusFile.addMsg(msgLevel.WARNING, sprintf("Communication problem during ADC measurement"));
